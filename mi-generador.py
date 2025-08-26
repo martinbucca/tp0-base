@@ -10,8 +10,7 @@ def parse_args():
         return archivo_salida, cantidad_clientes
     
 def get_yaml_content(cantidad_clientes):
-    content = """
-name: tp0
+    content = """name: tp0
 services:
   server:
     container_name: server
