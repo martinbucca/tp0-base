@@ -21,6 +21,9 @@ services:
       - LOGGING_LEVEL=DEBUG
     networks:
       - testing_net
+    volumes:
+      - ./server/config.ini:/config.ini
+
 """
     for i in range(1, cantidad_clientes + 1):
         content += f"""
@@ -33,6 +36,8 @@ services:
       - CLI_LOG_LEVEL=DEBUG
     networks:
       - testing_net
+    volumes:
+      - ./client/config.yaml:/config.yaml
     depends_on:
       - server
 """
