@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"time"
+	"os"
+	"os/signal"
 
 	"github.com/op/go-logging"
 )
@@ -23,6 +25,7 @@ type ClientConfig struct {
 type Client struct {
 	config ClientConfig
 	conn   net.Conn
+	is_currently_running bool
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -30,6 +33,7 @@ type Client struct {
 func NewClient(config ClientConfig) *Client {
 	client := &Client{
 		config: config,
+		is_currently_running: true,
 	}
 	return client
 }
@@ -50,14 +54,22 @@ func (c *Client) createClientSocket() error {
 	return nil
 }
 
+func handleSigterm(c *Client, sigCh <-chan os.Signal) {
+    <-sigCh
+    log.Infof("action: shutdown | result: in_progress | reason: signal received")
+    c.is_currently_running = false
+    if c.conn != nil {
+        c.conn.Close()
+    }
+}
+
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
 	// There is an autoincremental msgID to identify every message sent
 	// Messages if the message amount threshold has not been surpassed
-	for msgID := 1; msgID <= c.config.LoopAmount; msgID++ {
+	for msgID := 1; c.is_currently_running && msgID <= c.config.LoopAmount; msgID++ {
 		// Create the connection the server in every loop iteration. Send an
-		c.createClientSocket()
-
+		if err := c.createClientSocket(); err != nil { return }
 		// TODO: Modify the send to avoid short-write
 		fmt.Fprintf(
 			c.conn,
@@ -67,6 +79,7 @@ func (c *Client) StartClientLoop() {
 		)
 		msg, err := bufio.NewReader(c.conn).ReadString('\n')
 		c.conn.Close()
+		c.conn = nil
 
 		if err != nil {
 			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
