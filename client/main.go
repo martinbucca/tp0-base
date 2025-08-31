@@ -93,10 +93,10 @@ func PrintConfig(v *viper.Viper) {
 }
 
 func setupSigtermHandler(c *common.Client) <-chan os.Signal {
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGTERM)
-	go handleSigterm(c, sigCh)
-	return sigCh
+	sigChannel := make(chan os.Signal, 1)
+	signal.Notify(sigChannel, syscall.SIGTERM)
+	go handleSigterm(c, sigChannel)
+	return sigChannel
 }
 
 
@@ -122,7 +122,7 @@ func main() {
 
 
 	client := common.NewClient(clientConfig)
-	sigCh := setupSigtermHandler(client)
-	defer signal.Stop(sigCh)
+	sigChannel := setupSigtermHandler(client)
+	defer signal.Stop(sigChannel)
 	client.StartClientLoop()
 }

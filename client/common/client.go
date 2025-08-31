@@ -78,15 +78,16 @@ func (c *Client) StartClientLoop() {
 			msgID,
 		)
 		msg, err := bufio.NewReader(c.conn).ReadString('\n')
-		c.conn.Close()
-		c.conn = nil
+		if c.conn != nil:
+			c.conn.Close()
+			c.conn = nil
 
 		if err != nil {
 			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
 				c.config.ID,
 				err,
 			)
-			return
+			break
 		}
 
 		log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
