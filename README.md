@@ -24,3 +24,6 @@ El programa de Python primero lee los argumentos y luego usa la funcion `get_yam
 
 Para crear el archivo se puede hacer corriendo este comando por consola:
 `./generar-compose.sh <nombre yaml> <num clientes>`
+
+### Tests:
+![Tests Ejercicio 1](img/tests.png)
