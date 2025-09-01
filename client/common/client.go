@@ -37,7 +37,14 @@ func NewClient(config ClientConfig) *Client {
 	}
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGTERM)
-	go handleSigterm(client, sigChannel)
+	go func() {
+		<-sigChannel
+		log.Infof("action: shutdown | result: in_progress | reason: signal received")
+		client.is_currently_running = false
+		if client.conn != nil {
+			client.conn.Close()
+		}
+	}()
 	defer signal.Stop(sigChannel)
 	return client
 }
