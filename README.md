@@ -23,4 +23,8 @@ Tanto el servidor como el cliente necesitan manejar la señal SIGTERM para poder
   va a servir para chequear en el main loop del cliente.
   - Se configura un handler para manejar la señal SIGTERM (`setupSigtermHandler`). Se crea un canal (`sigChannel`) con capacidad para un 1 elemento que puede recibir señales del sistema y en caso de recibir una señal SIGTERM se le va a notificar. Se lanza una gorutine que ejecuta la funcion `handleSigterm` y queda bloqueada esperando que llegue una señal por el canal.
   - Cuando recibe una señal setea la variable  `is_currently_running` = `False` y cierra la conexion. En el loop principal del cliente, si se estaba intentando leer algo va a lanzar un error porque la conexion fue cerrada y se va a loggear el error y retornar. Si no, la condicion del loop va a detectar que `is_currently_running` = `False` y no va seguir ejecutando el loop. 
-  - Se usa `defer signal.Stop(sigChannel)` para limpiar el canal de señales al finalizar el main(), asegurando que no quede la gorutine bloqueada.
+
+### Tests
+
+
+![Tests Ejercicio 4](imgs/tests-ej4.png)
