@@ -45,7 +45,6 @@ func NewClient(config ClientConfig) *Client {
 			client.conn.Close()
 		}
 	}()
-	defer signal.Stop(sigChannel)
 	return client
 }
 
