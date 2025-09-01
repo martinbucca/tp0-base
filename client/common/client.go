@@ -6,6 +6,8 @@ import (
 	"net"
 	"time"
 	"os"
+	"os/signal"
+	"syscall"
 	"github.com/op/go-logging"
 )
 
@@ -33,6 +35,7 @@ func NewClient(config ClientConfig) *Client {
 		config: config,
 		is_currently_running: true,
 	}
+	setupSigtermHandler(client)
 	return client
 }
 
@@ -50,6 +53,12 @@ func (c *Client) createClientSocket() error {
 	}
 	c.conn = conn
 	return nil
+}
+
+func setupSigtermHandler(c *common.Client) <-chan os.Signal {
+	sigChannel := make(chan os.Signal, 1)
+	signal.Notify(sigChannel, syscall.SIGTERM)
+	go common.HandleSigterm(c, sigChannel)
 }
 
 func handleSigterm(c *Client, sigCh <-chan os.Signal) {
