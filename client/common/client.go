@@ -87,7 +87,7 @@ func (c *Client) StartClientLoop() {
 				c.config.ID,
 				err,
 			)
-			break
+			return
 		}
 
 		log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
@@ -99,5 +99,7 @@ func (c *Client) StartClientLoop() {
 		time.Sleep(c.config.LoopPeriod)
 
 	}
-	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+	if c.is_currently_running {
+		log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+	}
 }
