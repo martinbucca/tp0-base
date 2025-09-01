@@ -27,3 +27,8 @@ Con `sh -c` se invoca a la terminal y se le indica que ejecute el comando que vi
 Utilizando netcat se envia el mensaje al server (nombre del contenedor) y se guarda la respuesta.
 
 Luego se verifica la respuesta obtenida desde el server y se imprime el mensaje correspondiente.
+
+### Tests
+
+
+![Tests Ejercicio 3](imgs/tests-ej3.png)
