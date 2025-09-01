@@ -35,6 +35,10 @@ func NewClient(config ClientConfig) *Client {
 		config: config,
 		is_currently_running: true,
 	}
+	sigChannel := make(chan os.Signal, 1)
+	signal.Notify(sigChannel, syscall.SIGTERM)
+	go handleSigterm(client, sigChannel)
+	defer signal.Stop(sigChannel)
 	return client
 }
 
