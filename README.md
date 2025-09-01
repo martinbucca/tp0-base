@@ -1,30 +1,24 @@
-### Ejercicio N.º 4:
+### Ejercicio N.º 5:
+Modificar la lógica de negocio tanto de los clientes como del servidor para nuestro nuevo caso de uso.
 
-Modificar servidor y cliente para que ambos sistemas terminen de forma _graceful_ al recibir la signal SIGTERM. Terminar
-la aplicación de forma _graceful_ implica que todos los _file descriptors_ (entre los que se encuentran archivos,
-sockets, threads y procesos) deben cerrarse correctamente antes que el thread de la aplicación principal muera. Loguear
-mensajes en el cierre de cada recurso (hint: Verificar que hace el flag `-t` utilizado en el comando
-`docker compose down`).
+#### Cliente
+Emulará a una _agencia de quiniela_ que participa del proyecto. Existen 5 agencias. Deberán recibir como variables de entorno los campos que representan la apuesta de una persona: nombre, apellido, DNI, nacimiento, numero apostado (en adelante 'número'). Ej.: `NOMBRE=Santiago Lionel`, `APELLIDO=Lorca`, `DOCUMENTO=30904465`, `NACIMIENTO=1999-03-17` y `NUMERO=7574` respectivamente.
 
-### Solucion Ejercicio N°4:
-
-Tanto el servidor como el cliente necesitan manejar la señal SIGTERM para poder cerrar todos los recursos correctamente antes de que el thread principal muera.
-
-- Server:
-  - Al inicializar el servidor se setea la variable `is_currently_running` = `True`. Esta condicion va a servir para chequear en el main loop del server.
-  - Se indica que al recibir la señal se llame a la funcinon `handle_sigterm`
-  - La funcion `handle_sigterm` ejecuta `shutdown_server` que setea la condicion `is_currently_running` a False y cierra el socket del Server. 
-  - el `accept()` del socket es bloqueante pero tiene un timeout de 1s para que en caso de no recibir conexion entrante en ese tiempo, lanze un error y se verifique la condicion `is_currently_running` del loop while. 
-  - Tambien cuando se cierre el socket del server, al intentar hacer `accept()` va a saltar un error que se atrapa en el main loop y al verificarse la variable `is_currently_running`, como va a ser False, se va a salir del while loop
+Los campos deben enviarse al servidor para dejar registro de la apuesta. Al recibir la confirmación del servidor se debe imprimir por log: `action: apuesta_enviada | result: success | dni: ${DNI} | numero: ${NUMERO}`.
 
 
-- Client:
-  - Al inicializar el cliente se setea la variable `is_currently_running` = `True`. Esta condicion 
-  va a servir para chequear en el main loop del cliente.
-  - Se configura un handler para manejar la señal SIGTERM (`setupSigtermHandler`). Se crea un canal (`sigChannel`) con capacidad para un 1 elemento que puede recibir señales del sistema y en caso de recibir una señal SIGTERM se le va a notificar. Se lanza una gorutine que ejecuta la funcion `handleSigterm` y queda bloqueada esperando que llegue una señal por el canal.
-  - Cuando recibe una señal setea la variable  `is_currently_running` = `False` y cierra la conexion. En el loop principal del cliente, si se estaba intentando leer algo va a lanzar un error porque la conexion fue cerrada y se va a loggear el error y retornar. Si no, la condicion del loop va a detectar que `is_currently_running` = `False` y no va seguir ejecutando el loop. 
 
-### Tests
+#### Servidor
+Emulará a la _central de Lotería Nacional_. Deberá recibir los campos de la cada apuesta desde los clientes y almacenar la información mediante la función `store_bet(...)` para control futuro de ganadores. La función `store_bet(...)` es provista por la cátedra y no podrá ser modificada por el alumno.
+Al persistir se debe imprimir por log: `action: apuesta_almacenada | result: success | dni: ${DNI} | numero: ${NUMERO}`.
+
+#### Comunicación:
+Se deberá implementar un módulo de comunicación entre el cliente y el servidor donde se maneje el envío y la recepción de los paquetes, el cual se espera que contemple:
+* Definición de un protocolo para el envío de los mensajes.
+* Serialización de los datos.
+* Correcta separación de responsabilidades entre modelo de dominio y capa de comunicación.
+* Correcto empleo de sockets, incluyendo manejo de errores y evitando los fenómenos conocidos como [_short read y short write_](https://cs61.seas.harvard.edu/site/2018/FileDescriptors/).
 
 
-![Tests Ejercicio 4](imgs/tests-ej4.png)
+### Solucion Ejercicio N°5:
+
