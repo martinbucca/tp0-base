@@ -55,7 +55,7 @@ func (c *Client) createClientSocket() error {
 	return nil
 }
 
-func setupSigtermHandler(c *common.Client) <-chan os.Signal {
+func setupSigtermHandler(c *Client) <-chan os.Signal {
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGTERM)
 	go common.HandleSigterm(c, sigChannel)
