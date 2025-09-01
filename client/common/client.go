@@ -7,7 +7,7 @@ import (
 	"time"
 	"os"
 	"os/signal"
-	"syscall"
+
 	"github.com/op/go-logging"
 )
 
@@ -35,16 +35,6 @@ func NewClient(config ClientConfig) *Client {
 		config: config,
 		is_currently_running: true,
 	}
-	sigChannel := make(chan os.Signal, 1)
-	signal.Notify(sigChannel, syscall.SIGTERM)
-	go func() {
-		<-sigChannel
-		log.Infof("action: shutdown | result: in_progress | reason: signal received")
-		client.is_currently_running = false
-		if client.conn != nil {
-			client.conn.Close()
-		}
-	}()
 	return client
 }
 
@@ -88,10 +78,11 @@ func (c *Client) StartClientLoop() {
 			msgID,
 		)
 		msg, err := bufio.NewReader(c.conn).ReadString('\n')
-		if c.conn != nil {
+		if c.conn != nil{
 			c.conn.Close()
 			c.conn = nil
 		}
+
 		if err != nil {
 			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
 				c.config.ID,

@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 	"time"
+	"os/signal"
+	"syscall"
 	"github.com/op/go-logging"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -89,6 +91,13 @@ func PrintConfig(v *viper.Viper) {
 	)
 }
 
+func setupSigtermHandler(c *common.Client) <-chan os.Signal {
+	sigChannel := make(chan os.Signal, 1)
+	signal.Notify(sigChannel, syscall.SIGTERM)
+	go common.handleSigterm(c, sigChannel)
+	return sigChannel
+}
+
 
 func main() {
 	v, err := InitConfig()
@@ -112,5 +121,7 @@ func main() {
 
 
 	client := common.NewClient(clientConfig)
+	sigChannel := setupSigtermHandler(client)
+	defer signal.Stop(sigChannel)
 	client.StartClientLoop()
 }
