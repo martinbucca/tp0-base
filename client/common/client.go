@@ -35,7 +35,7 @@ func NewClient(config ClientConfig) *Client {
 		config: config,
 		is_currently_running: true,
 	}
-	setupSigtermHandler(client)
+	_ = setupSigtermHandler(client)
 	return client
 }
 
@@ -59,6 +59,7 @@ func setupSigtermHandler(c *common.Client) <-chan os.Signal {
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGTERM)
 	go common.HandleSigterm(c, sigChannel)
+	return sigChannel
 }
 
 func handleSigterm(c *Client, sigCh <-chan os.Signal) {
