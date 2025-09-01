@@ -8,3 +8,7 @@ En el archivo docker-compose-dev.yaml tanto para el server como para el cliente 
 Se agrega al .dockerignore los archivos de configuracion ya que al crear un volumen en el container no es necesario copiarlos al crear las imagenes.
 
 Ya no es necesario hacer rebuild de las imagenes cada vez que se hace un cambio en los archivos de configuracion. Los cambios se van a ver tambien en los contenedores.
+
+### Tests
+
+![Tests Ejercicio 2](imgs/tests-ej2.png)
