@@ -104,7 +104,7 @@ func main() {
 	PrintConfig(v)
 
 	birthDateStr := v.GetString("NACIMIENTO")
-	birthDate, err := time.Parse("1999-03-17", birthDateStr)
+	birthDate, err := time.Parse("2006-01-02", birthDateStr)
 	if err != nil {
 		log.Criticalf("Could not parse NACIMIENTO as date: %v", err)
 		os.Exit(1)
