@@ -22,3 +22,27 @@ Se deberá implementar un módulo de comunicación entre el cliente y el servido
 
 ### Solucion Ejercicio N°5:
 
+### Protocolo
+
+----------------------------------------------------------------------------------------------------
+Largo_del_payload|ID_MENSAJE|ID_Agencia|Nombre|Apellido|Documento|Fecha_nacimiento|Numero
+
+------4 Bytes----  -----------------------------   Variable ----------------------------------------
+
+Los primeros 4 bytes van a ser para indicar el largo del payload. El payload va a contener toda la informacion sobre la apuesta y va a ser de tamaño variable.
+
+1. El cliente (Agencia de quiniela) le manda un mensaje al servidor (Central de Loteria Nacional) en donde el ID del mensaje es `BET`.
+2. El servidor lee los primeros 4 bytes y sabe exactamente cuantos bytes mas tiene que leer para el payload. Deserializa el payload y separa los campos que vienen en el orden indicado en la estructura  y separados por el caracter `|`
+3. En caso de poder guardar correctamente la apuesta, el servidor le va a mandar un mensaje al cliente en donde los primeros 4 bytes son el largo del payload y un payload variable. Este protocolo define doss posibles mensajes para ese payload:
+- "OK": En caso de que se pudo guardar la apuesta correctamente
+- "ERROR": En caso de algun error en el servidor para procesar la apuesta
+------------------------------------
+Largo_del_payload|MENASAJE
+
+------4 Bytes----  ----Variable------
+
+
+### Tests
+
+
+![Tests Ejercicio 5](imgs/tests-ej5.png)
