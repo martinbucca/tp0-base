@@ -1,4 +1,4 @@
-
+from common.utils import Bet
 
 class AgencySocket:
     def __init__(self, socket):
@@ -11,13 +11,34 @@ class AgencySocket:
             raise ConnectionError("Failed to read message length")
         msg_length = int.from_bytes(length_bytes, byteorder='big')
 
-        # Read the rest of the message based on the length
-        msg = b""
-        while len(msg) < msg_length:
-            chunk = self.socket.recv(msg_length - len(msg))
+        # Read the payload based on the length
+        payload = b""
+        while len(payload) < msg_length:
+            chunk = self.socket.recv(msg_length - len(payload))
             if not chunk:
                 raise ConnectionError("Connection closed before receiving full message")
-            msg += chunk
-        return msg.decode("utf-8")
+            payload += chunk
+
+        # Decode and split fields
+        fields = payload.decode("utf-8").split("|")
+        # Create Bet object with fields (assuming Bet takes all fields as arguments)
+        bet = Bet(*fields)
+        return bet
+
+    def send_message(self, msg):
+        msg_bytes = msg.encode("utf-8")
+        length_prefix = len(msg_bytes).to_bytes(4, byteorder='big')
+        self.socket.sendall(length_prefix + msg_bytes)
+
+    def send_ok_message(self):
+        self.send_message("OK")
+
+    def send_error_message(self):
+        self.send_message("ERROR")
+        
+
+    def getpeername(self):
+        return self.socket.getpeername()
+
 
     

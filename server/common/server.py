@@ -2,6 +2,8 @@ import socket
 import sys
 import signal
 import logging
+from common.utils import store_bets
+from common.communication import AgencySocket
 
 
 class Server:
@@ -25,13 +27,13 @@ class Server:
 
         while self._is_currently_running:
             try:
-                client_sock = self.__accept_new_connection()
-                self.__handle_client_connection(client_sock)
+                agency_client_sock = self.__accept_new_connection()
+                self.__handle_client_connection(agency_client_sock)
             except OSError:
                 if not self._is_currently_running:
                     break 
 
-    def __handle_client_connection(self, client_sock):
+    def __handle_client_connection(self, agency_client_sock):
         """
         Read message from a specific client socket and closes the socket
 
@@ -40,11 +42,18 @@ class Server:
         """
         try:
             # TODO: Modify the receive to avoid short-reads
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
-            addr = client_sock.getpeername()
+            bet = agency_client_sock.receive_bet()
+            addr = agency_client_sock.getpeername()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
             # TODO: Modify the send to avoid short-writes
-            client_sock.send("{}\n".format(msg).encode('utf-8'))
+            if bet:
+                store_bets([bet])
+                logging.info(
+                    f"action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}"
+                )
+                agency_client_sock.send_ok_message()
+            else:
+                agency_client_sock.send_error_message()
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
@@ -62,7 +71,7 @@ class Server:
         logging.info('action: accept_connections | result: in_progress')
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
-        return c
+        return AgencySocket(c)
     
     def shutdown(self):
         try:
