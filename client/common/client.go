@@ -12,6 +12,7 @@ import (
 )
 
 var log = logging.MustGetLogger("log")
+const AGENCY_SUCCESS_MESSAGE = "OK"
 
 // ClientConfig Configuration used by the client
 type ClientConfig struct {
@@ -27,7 +28,7 @@ type ClientConfig struct {
 // Client Entity that encapsulates how
 type Client struct {
 	config ClientConfig
-	conn   net.Conn
+	betSocket   *BetSocket
 	is_currently_running bool
 }
 
@@ -45,7 +46,7 @@ func NewClient(config ClientConfig) *Client {
 // CreateClientSocket Initializes client socket. In case of
 // failure, error is printed in stdout/stderr and exit 1
 // is returned
-func (c *Client) createClientSocket() error {
+func (c *Client) createBetSocket() error {
 	conn, err := net.Dial("tcp", c.config.ServerAddress)
 	if err != nil {
 		log.Criticalf(
@@ -53,8 +54,9 @@ func (c *Client) createClientSocket() error {
 			c.config.ID,
 			err,
 		)
+		return err
 	}
-	c.conn = conn
+	c.betSocket = NewBetSocket(conn)
 	return nil
 }
 
@@ -74,44 +76,37 @@ func handleSigterm(c *Client, sigCh <-chan os.Signal) {
     }
 }
 
+
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
-	// There is an autoincremental msgID to identify every message sent
-	// Messages if the message amount threshold has not been surpassed
-	for msgID := 1; c.is_currently_running && msgID <= c.config.LoopAmount; msgID++ {
-		// Create the connection the server in every loop iteration. Send an
-		if err := c.createClientSocket(); err != nil { return }
-		// TODO: Modify the send to avoid short-write
-		fmt.Fprintf(
-			c.conn,
-			"[CLIENT %v] Message N°%v\n",
-			c.config.ID,
-			msgID,
-		)
-		msg, err := bufio.NewReader(c.conn).ReadString('\n')
-		if c.conn != nil{
-			c.conn.Close()
-			c.conn = nil
-		}
-
-		if err != nil {
-			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
-				c.config.ID,
-				err,
-			)
-			return
-		}
-
-		log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
-			c.config.ID,
-			msg,
-		)
-
-		// Wait a time between sending one message and the next one
-		time.Sleep(c.config.LoopPeriod)
-
+	if err := c.createBetSocket(); err != nil {
+		return
 	}
-	if c.is_currently_running {
-		log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+	err := c.betSocket.sendBet(&c.config)
+	if err != nil {
+		log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
+			c.config.DocumentId,
+			c.config.Number,
+			err,
+		)
+		return
 	}
+
+	msg, err := c.betSocket.readMessage()
+	if err != nil {
+		log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
+			c.config.DocumentId,
+			c.config.Number,
+			err,
+		)
+		return
+	}
+
+	if msg == AGENCY_SUCCESS_MESSAGE {
+		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
+			c.config.DocumentId,
+			c.config.Number,
+		)
+	}
+	c.betSocket.Close()
 }
