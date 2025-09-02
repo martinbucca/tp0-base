@@ -66,6 +66,7 @@ func (b *BetSocket) readMessage() (string, error) {
 	// Primero leemos los 4 bytes de longitud
 	lenBuf := make([]byte, 4)
 	if _, err := io.ReadFull(b.conn, lenBuf); err != nil {
+		log.Errorf("action: read_message_length | result: fail | error: %v", err)
 		return "", err
 	}
 	length := binary.BigEndian.Uint32(lenBuf)
@@ -73,6 +74,7 @@ func (b *BetSocket) readMessage() (string, error) {
 	// Ahora leemos exactamente "length" bytes
 	payload := make([]byte, length)
 	if _, err := io.ReadFull(b.conn, payload); err != nil {
+		log.Errorf("action: read_message_payload | result: fail | error: %v", err)
 		return "", err
 	}
 
