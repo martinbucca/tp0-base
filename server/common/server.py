@@ -44,7 +44,7 @@ class Server:
             # TODO: Modify the receive to avoid short-reads
             bet = agency_client_sock.receive_bet()
             addr = agency_client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
+            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {bet}')
             # TODO: Modify the send to avoid short-writes
             if bet:
                 store_bets([bet])
@@ -57,7 +57,7 @@ class Server:
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
-            client_sock.close()
+            agency_client_sock.close()
 
     def __accept_new_connection(self):
         """
