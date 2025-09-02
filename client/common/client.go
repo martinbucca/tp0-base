@@ -92,7 +92,7 @@ func (c *Client) StartClientLoop() {
 
 	msg, err := c.betSocket.readMessage()
 	if err != nil {
-		log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
+		log.Errorf("action: respuesta_recibida | result: fail | dni: %v | numero: %v | error: %v",
 			c.config.DocumentId,
 			c.config.Number,
 			err,
