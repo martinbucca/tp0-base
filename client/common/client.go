@@ -1,8 +1,6 @@
 package common
 
 import (
-	"bufio"
-	"fmt"
 	"net"
 	"time"
 	"os"
@@ -71,8 +69,8 @@ func handleSigterm(c *Client, sigCh <-chan os.Signal) {
     <-sigCh
     log.Infof("action: shutdown | result: in_progress | reason: signal received")
     c.is_currently_running = false
-    if c.conn != nil {
-        c.conn.Close()
+    if c.betSocket != nil {
+        c.betSocket.Close()
     }
 }
 
