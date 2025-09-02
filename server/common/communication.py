@@ -37,7 +37,9 @@ class AgencySocket:
 
     def send_error_message(self):
         self.send_message("ERROR")
-        
+
+    def close(self):
+        self.socket.close()
 
     def getpeername(self):
         return self.socket.getpeername()
