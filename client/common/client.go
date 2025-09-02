@@ -16,11 +16,7 @@ const AGENCY_SUCCESS_MESSAGE = "OK"
 type ClientConfig struct {
 	ID            string
 	ServerAddress string
-	Name		  string
-	Surname      string
-	DocumentId   string
-	BirthDate    time.Time
-	Number       string
+	MaxBatchAmount int
 }
 
 // Client Entity that encapsulates how

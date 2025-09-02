@@ -34,11 +34,7 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("id")
 	v.BindEnv("server", "address")
 	v.BindEnv("log", "level")
-	v.BindEnv("NOMBRE")
-	v.BindEnv("APELLIDO")
-	v.BindEnv("DOCUMENTO")
-	v.BindEnv("NACIMIENTO")
-	v.BindEnv("NUMERO")
+	v.BindEnv("batch", "maxAmount")
 
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
@@ -103,21 +99,11 @@ func main() {
 	// Print program config with debugging purposes
 	PrintConfig(v)
 
-	birthDateStr := v.GetString("NACIMIENTO")
-	birthDate, err := time.Parse("2006-01-02", birthDateStr)
-	if err != nil {
-		log.Criticalf("Could not parse NACIMIENTO as date: %v", err)
-		os.Exit(1)
-	}
 
 	clientConfig := common.ClientConfig{
 		ServerAddress: v.GetString("server.address"),
 		ID:            v.GetString("id"),
-		Name:          v.GetString("NOMBRE"),
-		Surname:       v.GetString("APELLIDO"),
-		DocumentId:    v.GetString("DOCUMENTO"),
-		BirthDate:     birthDate,
-		Number:        v.GetString("NUMERO"),
+		MaxBatchAmount: v.GetInt("batch.maxAmount"),
 	}
 
 
