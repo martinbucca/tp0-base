@@ -21,7 +21,9 @@ class AgencySocket:
 
         # Decode and split fields
         fields = payload.decode("utf-8").split("|")
-        # Create Bet object with fields (assuming Bet takes all fields as arguments)
+        # Remove the first field (message id)
+        fields = fields[1:]
+        # Create Bet object with remaining fields
         bet = Bet(*fields)
         return bet
 
