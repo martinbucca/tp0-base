@@ -1,5 +1,10 @@
 from common.utils import Bet
 
+BET_MESSAGE_ID = "BET"
+SEPARATOR = "|"
+AGENCY_SUCCESS_MESSAGE = "OK"
+AGENCY_ERROR_MESSAGE = "ERROR"
+
 class AgencySocket:
     def __init__(self, socket):
         self.socket = socket
@@ -19,13 +24,12 @@ class AgencySocket:
                 raise ConnectionError("Connection closed before receiving full message")
             payload += chunk
 
-        # Decode and split fields
         fields = payload.decode("utf-8").split("|")
-        # Remove the first field (message id)
-        fields = fields[1:]
-        # Create Bet object with remaining fields
-        bet = Bet(*fields)
-        return bet
+        if fields[0] == BET_MESSAGE_ID:
+            fields = fields[1:]
+            bet = Bet(*fields)
+            return bet
+        return None
 
     def send_message(self, msg):
         msg_bytes = msg.encode("utf-8")
@@ -33,10 +37,10 @@ class AgencySocket:
         self.socket.sendall(length_prefix + msg_bytes)
 
     def send_ok_message(self):
-        self.send_message("OK")
+        self.send_message(AGENCY_SUCCESS_MESSAGE)
 
     def send_error_message(self):
-        self.send_message("ERROR")
+        self.send_message(AGENCY_ERROR_MESSAGE)
 
     def close(self):
         self.socket.close()
