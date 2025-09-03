@@ -26,7 +26,7 @@ type Bet struct {
 	Number    int
 }
 
-func NewBetFromCSV(record []string) (*Bet, error) {
+func NewBetFromCSVLine(record []string) (*Bet, error) {
 	if len(record) != 5 {
 		return nil, fmt.Errorf("Invalid CSV record: %v", record)
 	}
@@ -40,7 +40,7 @@ func NewBetFromCSV(record []string) (*Bet, error) {
 
 	number, err := strconv.Atoi(record[4])
 	if err != nil {
-		return nil, fmt.Errorf("Invalid Number: %v", err)
+		return nil, err
 	}
 
 	return &Bet{
@@ -60,7 +60,7 @@ type CSVReader struct {
 func NewCSVReader() (*CSVReader, error) {
 	file, err := os.Open(FILEPATH)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening CSV file: %v", err)
+		return nil, err
 	}
 
 	reader := csv.NewReader(file)
@@ -75,12 +75,12 @@ func (r *CSVReader) ReadChunk(chunkId string, maxAmount int) (*BetsChunk, error)
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("Error: could not read CSV record: %v", err)
+			return nil, err
 		}
 
-		bet, err := NewBetFromCSV(record)
+		bet, err := NewBetFromCSVLine(record)
 		if err != nil {
-			return nil, fmt.Errorf("Error: could not parse CSV record: %v", err)
+			return nil, err
 		}
 		bets = append(bets, bet)
 	}

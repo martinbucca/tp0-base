@@ -7,10 +7,12 @@ import (
 	"io"
 )
 
-const BET_MESSAGE_ID = "BET"
 const BET_SEPARATOR = "|"
 const CHUNK_SEPARATOR = "&"
 const CHUNK_BET_MESSAGE_ID = uint8(12)
+const CHUNK_FINISH_MESSAGE_ID = uint8(13)
+const BYTES_MESSAGE_ID = 1
+const BYTES_PAYLOAD_LENGTH = 2
 
 
 type BetSocket struct {
@@ -32,17 +34,6 @@ func NewBetSocket(ServerAddress string, clientId string) (*BetSocket, error) {
 }
 
 
-func serializeBet(bet *Bet) string {
-	fields := []string{
-		bet.Name,
-		bet.Surname,
-		bet.DocumentId,
-		bet.Birthdate,
-		fmt.Sprintf("%d", bet.Number),
-	}
-	return fmt.Sprintf("%s", joinWithSeparator(fields, BET_SEPARATOR))
-}
-
 func joinWithSeparator(fields []string, sep string) string {
 	amountFields := len(fields)
 	if amountFields == 0 {
@@ -54,6 +45,17 @@ func joinWithSeparator(fields []string, sep string) string {
 		result += sep + fields[i]
 	}
 	return result
+}
+
+func serializeBet(bet *Bet) string {
+	fields := []string{
+		bet.Name,
+		bet.Surname,
+		bet.DocumentId,
+		bet.Birthdate,
+		fmt.Sprintf("%d", bet.Number),
+	}
+	return fmt.Sprintf("%s", joinWithSeparator(fields, BET_SEPARATOR))
 }
 
 func (b *BetSocket) serializeBetsChunk(betsChunk *BetsChunk) string {
@@ -78,24 +80,24 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 	payload := []byte(data)
 	length := uint16(len(payload))
 
-	lenBuf := make([]byte, 2)
-	binary.BigEndian.PutUint16(lenBuf, length)
-
-	messageIdBuf := make([]byte, 1)
+	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
 	binary.BigEndian.PutUint8(messageIdBuf, CHUNK_BET_MESSAGE_ID)
+
+	lenBuf := make([]byte, BYTES_PAYLOAD_LENGTH)
+	binary.BigEndian.PutUint16(lenBuf, length)
 
 	totalWritten := 0
 	for totalWritten < int(length) {
-		if totalWritten < 2 {
-			// Write the length prefix (2 bytes, big endian)
-			n, err := b.conn.Write(lenBuf[totalWritten:])
+		if totalWritten < BYTES_MESSAGE_ID {
+			// Write the message ID (1 byte, big endian)
+			n, err := b.conn.Write(messageIdBuf)
 			if err != nil {
 				return err
 			}
 			totalWritten += n
-		} else if totalWritten == 2 {
-			// Write the message ID (1 byte, big endian)
-			n, err := b.conn.Write(messageIdBuf)
+		} else if totalWritten > BYTES_MESSAGE_ID && totalWritten < BYTES_PAYLOAD_LENGTH {
+			// Write the length prefix (2 bytes, big endian)
+			n, err := b.conn.Write(lenBuf[totalWritten:])
 			if err != nil {
 				return err
 			}
@@ -108,6 +110,22 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 			}
 			totalWritten += n
 		}
+	}
+
+	return nil
+}
+
+func (b *BetSocket) sendFinish() error {
+	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
+	binary.BigEndian.PutUint8(messageIdBuf, CHUNK_FINISH_MESSAGE_ID)
+
+	totalWritten := 0
+	for totalWritten < BYTES_MESSAGE_ID {
+		n, err := b.conn.Write(messageIdBuf[totalWritten:])
+		if err != nil {
+			return err
+		}
+		totalWritten += n
 	}
 
 	return nil

@@ -11,6 +11,7 @@ import (
 
 var log = logging.MustGetLogger("log")
 const AGENCY_SUCCESS_MESSAGE = "OK"
+const MAX_AMOUNT_ALLOWED = 50
 
 type ClientConfig struct {
 	ID            string
@@ -35,23 +36,6 @@ func NewClient(config ClientConfig) *Client {
 	return client
 }
 
-// CreateClientSocket Initializes client socket. In case of
-// failure, error is printed in stdout/stderr and exit 1
-// is returned
-func (c *Client) createBetSocket() error {
-	betSocket, err := NewBetSocket(c.config.ServerAddress)
-	if err != nil {
-		log.Criticalf(
-			"action: connect | result: fail | client_id: %v | error: %v",
-			c.config.ID,
-			err,
-		)
-		return err
-	}
-	c.betSocket = betSocket
-	return nil
-}
-
 func setupSigtermHandler(c *Client) <-chan os.Signal {
 	sigChannel := make(chan os.Signal, 1)
 	signal.Notify(sigChannel, syscall.SIGTERM)
@@ -69,6 +53,15 @@ func handleSigterm(c *Client, sigCh <-chan os.Signal) {
 }
 
 
+func (c *Client) createBetSocket() error {
+	betSocket, err := NewBetSocket(c.config.ServerAddress)
+	if err != nil {
+		return err
+	}
+	c.betSocket = betSocket
+	return nil
+}
+
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
 	if !c.is_currently_running {
@@ -78,20 +71,36 @@ func (c *Client) StartClientLoop() {
 
 	csvReader, err := NewCSVReader()
 	if err != nil {
-		log.Criticalf("Could not open CSV file: %v", err)
+		log.Criticalf("action: open_csv | result: fail | error: %v", err)
 		return
 	}
 	defer csvReader.Close()
 
 	if err := c.createBetSocket(); err != nil {
+		log.Criticalf(
+			"action: connect | result: fail | client_id: %v | error: %v",
+			c.config.ID,
+			err,
+		)
 		return
 	}
 	chunkID := 0
+	maxBatchAmount := c.config.MaxBatchAmount
+	if maxBatchAmount > MAX_AMOUNT_ALLOWED {
+		maxBatchAmount = MAX_AMOUNT_ALLOWED
+	}
 	for c.is_currently_running {
-		chunk, err := csvReader.ReadChunk(fmt.Sprintf("%d", chunkID), c.config.MaxBatchAmount)
+		chunk, err := csvReader.ReadChunk(fmt.Sprintf("%d", chunkID), maxBatchAmount)
 		if err != nil {
 			log.Errorf("action: read_chunk | result: fail | error: %v", err)
 			return
+		}
+		if len(chunk.Bets) == 0 {
+			log.Infof("action: read_chunk | result: empty | chunk_id: %v", chunkID)
+			if err := c.betSocket.sendFinish(); err != nil {
+				log.Errorf("action: send_finish | result: fail | error: %v", err)
+			}
+			continue
 		}
 		if err := c.betSocket.sendBet(chunk); err != nil {
 			log.Errorf("action: send_message | result: fail | error: %v", err)
