@@ -5,6 +5,8 @@ import logging
 from common.utils import store_bets
 from common.communication import AgencySocket
 
+TIMEOUT = 1
+
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -12,7 +14,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
-        self._server_socket.settimeout(1)
+        self._server_socket.settimeout(TIMEOUT)
         self._is_currently_running = True
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
@@ -42,18 +44,11 @@ class Server:
         """
         try:
             # TODO: Modify the receive to avoid short-reads
-            bet = agency_client_sock.receive_bet()
-            addr = agency_client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {bet}')
-            # TODO: Modify the send to avoid short-writes
-            if bet:
-                store_bets([bet])
-                logging.info(
-                    f"action: apuesta_almacenada | result: success | dni: {bet.document} | numero: {bet.number}"
-                )
-                agency_client_sock.send_ok_message()
-            else:
-                agency_client_sock.send_error_message()
+            chunk_id, bets_chunk = agency_client_sock.receive_bets_chunk()
+            logging.info(f'action: batch_recibido | result: in_progress | cantidad: {len(bets_chunk)}')
+            store_bets(bets_chunk)
+            logging.info(f"action: apuesta_recibida | result: success | cantidad: ${len(bets_chunk)}")
+            agency_client_sock.send_ok_message(chunk_id)
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
