@@ -12,14 +12,12 @@ import (
 var log = logging.MustGetLogger("log")
 const AGENCY_SUCCESS_MESSAGE = "OK"
 
-// ClientConfig Configuration used by the client
 type ClientConfig struct {
 	ID            string
 	ServerAddress string
 	MaxBatchAmount int
 }
 
-// Client Entity that encapsulates how
 type Client struct {
 	config ClientConfig
 	betSocket   *BetSocket
@@ -41,7 +39,7 @@ func NewClient(config ClientConfig) *Client {
 // failure, error is printed in stdout/stderr and exit 1
 // is returned
 func (c *Client) createBetSocket() error {
-	conn, err := net.Dial("tcp", c.config.ServerAddress)
+	betSocket, err := NewBetSocket(c.config.ServerAddress)
 	if err != nil {
 		log.Criticalf(
 			"action: connect | result: fail | client_id: %v | error: %v",
@@ -50,7 +48,7 @@ func (c *Client) createBetSocket() error {
 		)
 		return err
 	}
-	c.betSocket = NewBetSocket(conn)
+	c.betSocket = betSocket
 	return nil
 }
 
@@ -73,34 +71,36 @@ func handleSigterm(c *Client, sigCh <-chan os.Signal) {
 
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
+	if !c.is_currently_running {
+		return
+	}
+	
+
+	csvReader, err := NewCSVReader()
+	if err != nil {
+		log.Criticalf("Could not open CSV file: %v", err)
+		return
+	}
+	defer csvReader.Close()
+
 	if err := c.createBetSocket(); err != nil {
 		return
 	}
-	err := c.betSocket.sendBet(&c.config)
-	if err != nil {
-		log.Errorf("action: apuesta_enviada | result: fail | dni: %v | numero: %v | error: %v",
-			c.config.DocumentId,
-			c.config.Number,
-			err,
-		)
-		return
+	chunkID := 0
+	for c.is_currently_running {
+		chunk, err := csvReader.ReadChunk(fmt.Sprintf("%d", chunkID), c.config.MaxBatchAmount)
+		if err != nil {
+			log.Errorf("action: read_chunk | result: fail | error: %v", err)
+			return
+		}
+		if err := c.betSocket.sendBet(chunk); err != nil {
+			log.Errorf("action: send_message | result: fail | error: %v", err)
+			return
+		}
+		// Wait to receive an ack with the chunk Id
+		chunkID++
 	}
-
-	msg, err := c.betSocket.readMessage()
-	if err != nil {
-		log.Errorf("action: respuesta_recibida | result: fail | dni: %v | numero: %v | error: %v",
-			c.config.DocumentId,
-			c.config.Number,
-			err,
-		)
-		return
+	if c.betSocket != nil  {
+		c.betSocket.Close()
 	}
-
-	if msg == AGENCY_SUCCESS_MESSAGE {
-		log.Infof("action: apuesta_enviada | result: success | dni: %v | numero: %v",
-			c.config.DocumentId,
-			c.config.Number,
-		)
-	}
-	c.betSocket.Close()
 }

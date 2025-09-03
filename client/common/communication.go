@@ -8,54 +8,106 @@ import (
 )
 
 const BET_MESSAGE_ID = "BET"
-const SEPARATOR = "|"
+const BET_SEPARATOR = "|"
+const CHUNK_SEPARATOR = "&"
+const CHUNK_BET_MESSAGE_ID = uint8(12)
 
 
 type BetSocket struct {
+	clientId string
 	conn net.Conn
 }
 
 // Constructor
-func NewBetSocket(conn net.Conn) *BetSocket {
-	return &BetSocket{conn: conn}
+func NewBetSocket(ServerAddress string, clientId string) (*BetSocket, error) {
+	conn, err := net.Dial("tcp", ServerAddress)
+	if err != nil {
+		log.Criticalf(
+			"action: connect | result: fail | error: %v",
+			err,
+		)
+		return nil, err
+	}
+	return &BetSocket{conn: conn, clientId: clientId}, nil
 }
 
 
-func serializeBet(config *ClientConfig) string {
+func serializeBet(bet *Bet) string {
 	fields := []string{
-		BET_MESSAGE_ID,
-		config.ID,
-		config.Name,
-		config.Surname,
-		config.DocumentId,
-		config.BirthDate.Format("2006-01-02"),
-		config.Number,
+		bet.Name,
+		bet.Surname,
+		bet.DocumentId,
+		bet.Birthdate,
+		fmt.Sprintf("%d", bet.Number),
 	}
-	return fmt.Sprintf("%s", joinWithSeparator(fields, SEPARATOR))
+	return fmt.Sprintf("%s", joinWithSeparator(fields, BET_SEPARATOR))
 }
 
 func joinWithSeparator(fields []string, sep string) string {
-	return fmt.Sprint(fields[0], sep, fields[1], sep, fields[2], sep, fields[3], sep, fields[4], sep, fields[5], sep, fields[6])
+	amountFields := len(fields)
+	if amountFields == 0 {
+		return ""
+	}
+
+	result := fields[0]
+	for i := 1; i < amountFields; i++ {
+		result += sep + fields[i]
+	}
+	return result
 }
 
-func (b *BetSocket) sendBet(config *ClientConfig) error {
-	data := serializeBet(config)
-	payload := []byte(data)
-	length := uint32(len(payload))
-
-	lenBuf := make([]byte, 4)
-	binary.BigEndian.PutUint32(lenBuf, length)
-	if _, err := b.conn.Write(lenBuf); err != nil {
-		return err
+func (b *BetSocket) serializeBetsChunk(betsChunk *BetsChunk) string {
+	fields := []string{
+		b.clientId,
+		betsChunk.Id,
 	}
+
+	bets := betsChunk.Bets
+	for _, bet := range bets {
+		serializedBet := serializeBet(bet)
+		fields = append(fields, serializedBet)
+	}
+
+	return fmt.Sprintf("%s", joinWithSeparator(fields, CHUNK_SEPARATOR))
+}
+
+
+
+func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
+	data := serializeBetsChunk(betsChunk)
+	payload := []byte(data)
+	length := uint16(len(payload))
+
+	lenBuf := make([]byte, 2)
+	binary.BigEndian.PutUint16(lenBuf, length)
+
+	messageIdBuf := make([]byte, 1)
+	binary.BigEndian.PutUint8(messageIdBuf, CHUNK_BET_MESSAGE_ID)
 
 	totalWritten := 0
 	for totalWritten < int(length) {
-		n, err := b.conn.Write(payload[totalWritten:])
-		if err != nil {
-			return err
+		if totalWritten < 2 {
+			// Write the length prefix (2 bytes, big endian)
+			n, err := b.conn.Write(lenBuf[totalWritten:])
+			if err != nil {
+				return err
+			}
+			totalWritten += n
+		} else if totalWritten == 2 {
+			// Write the message ID (1 byte, big endian)
+			n, err := b.conn.Write(messageIdBuf)
+			if err != nil {
+				return err
+			}
+			totalWritten += n
+		} else {
+			// Write the payload (the bets)
+			n, err := b.conn.Write(payload[totalWritten:])
+			if err != nil {
+				return err
+			}
+			totalWritten += n
 		}
-		totalWritten += n
 	}
 
 	return nil
