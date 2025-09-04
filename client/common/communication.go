@@ -97,12 +97,12 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 	for totalWritten < int(length) {
 		if totalWritten < BYTES_MESSAGE_ID {
 			// Write the message ID (1 byte, big endian)
-			n, err := b.conn.Write(messageIdBuf)
+			n, err := b.conn.Write(messageIdBuf[totalWritten:])
 			if err != nil {
 				return err
 			}
 			totalWritten += n
-		} else if totalWritten > BYTES_MESSAGE_ID && totalWritten < BYTES_PAYLOAD_LENGTH {
+		} else if totalWritten >= BYTES_MESSAGE_ID && totalWritten < BYTES_MESSAGE_ID+BYTES_PAYLOAD_LENGTH {
 			// Write the length prefix (2 bytes, big endian)
 			n, err := b.conn.Write(lenBuf[totalWritten:])
 			if err != nil {
