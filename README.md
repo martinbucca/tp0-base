@@ -488,7 +488,7 @@ while True:
     - 2 Bytes fijos para el Id del mensaje
     - 4 Bytes fijos para el ID de la agencia
 
-- Una vez que la agencia recibe el `finishACK` por parte del servidor, puede empezar a pedir por los ganadores usando el mensaje `sendGetWinners`, aunque solo se le respondera una vez que todos los clientes terminaron. Luego de recibir el finishACK, el cliente cierra el socket y va a abrir una nueva conexion por cada intento de pedido de ganadores que haga. Esto es para evitar que el servidor se quede esperando mensajes de un socket inactivo.
+- Una vez que la agencia recibe el `finishACK` por parte del servidor, puede empezar a pedir por los ganadores usando el mensaje `sendGetWinners`, aunque solo se le respondera una vez que todos los clientes terminaron. Luego de recibir el finishACK, el cliente cierra el socket y va a abrir una nueva conexion por cada intento de pedido de ganadores que haga. Esto es para evitar que el servidor se quede esperando mensajes de un socket inactivo y pueda atender al resto de los clientes.
 
   - El cliente intentara enviar cada un tiempo `RETRY_INTERVAL` el mensaje `sendGetWinners` para obtener sus ganadores. 
   - Una vez enviado el mensaje se quedara esperando por la respuesta del servidor. El servidor enviara una respuesta al mensaje `sendGetWinners` que dependiendo del caso el ID va a ser:
