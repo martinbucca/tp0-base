@@ -195,7 +195,11 @@ func (b *BetSocket) waitForFinish() error {
 		totalRead += n
 	}
 	clientId := binary.BigEndian.Uint32(clientIdBuf)
-	if clientId != uint32(strconv.Atoi(b.clientId)) {
+	expectedClientId, err := strconv.Atoi(b.clientId)
+	if err != nil {
+		return err
+	}
+	if clientId != uint32(expectedClientId) {
 		return fmt.Errorf("unexpected client ID: %d", clientId)
 	}
 	return nil
