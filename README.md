@@ -18,11 +18,12 @@ En el archivo de Docker Compose de salida se pueden definir volúmenes, variable
 
 
 ### Solucion Ejercicio N°1:
+
 Se define un script en `generar-compose.sh` que si no recibe dos parametros, muestra por consola la manera de usarlo y termina. En caso de recibir dos parametros, correspondientes al nombre del archivo yaml a generar y la cantidad de clientes, llama a un script de python `mi-generador.py` que se encarga de crear el archivo yaml.
 
 El programa de Python primero lee los argumentos y luego usa la funcion `get_yaml_content(cantidad_clientes)` que se encarga de devolver el contenido original del yaml y agrega el contenido para cada uno de los clientes a crear con un for loop que agrega el nombre del cliente y el ID de forma dinamica. Luego se llama a la funcion `write_yaml_file(archivo_salida, yaml_content)` que abre el archivo yaml y escribe todo el contenido.
 
-Para crear el archivo se puede hacer corriendo este comando por consola:
+Se puede generar el archivo corriendo el siguiente comando por consola:
 `./generar-compose.sh <nombre yaml> <num clientes>`
 
 ### Tests:
