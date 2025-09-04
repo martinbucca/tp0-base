@@ -12,8 +12,7 @@ WINNERS_RESULT_MESSAGE_ID = 17
 BYTES_MESSAGE_ID = 2
 BYTES_PAYLOAD_LENGTH = 2
 BYTES_CHUNK_ID_OK_MESSAGE = 4
-BYTES_CLIENT_ID_FINISH_MESSAGE = 4
-BYTES_CLIENT_ID_WINNERS_MESSAGE = 4
+BYTES_CLIENT_ID = 4
 
 
 
@@ -69,12 +68,12 @@ class AgencySocket:
         self.socket.sendall(message_id + chunk_id_bytes)
 
     def send_finish_message(self, client_id):
-        client_id_bytes = self.socket.recv(BYTES_CLIENT_ID_FINISH_MESSAGE)
-        if len(client_id_bytes) < BYTES_CLIENT_ID_FINISH_MESSAGE:
+        client_id_bytes = self.socket.recv(BYTES_CLIENT_ID)
+        if len(client_id_bytes) < BYTES_CLIENT_ID:
             raise ConnectionError("Failed to read client ID")
         client_id = int.from_bytes(client_id_bytes, byteorder='big')
         message_id = FINISH_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
-        client_id = client_id.to_bytes(BYTES_CLIENT_ID_FINISH_MESSAGE, byteorder='big')
+        client_id = client_id.to_bytes(BYTES_CLIENT_ID, byteorder='big')
         finish_message_bytes = message_id + client_id
         self.socket.sendall(finish_message_bytes)
 
@@ -83,8 +82,8 @@ class AgencySocket:
         self.socket.sendall(message_id)
 
     def receive_client_id(self):
-        client_id_bytes = self.socket.recv(BYTES_CLIENT_ID_WINNERS_MESSAGE)
-        if len(client_id_bytes) < BYTES_CLIENT_ID_WINNERS_MESSAGE:
+        client_id_bytes = self.socket.recv(BYTES_CLIENT_ID)
+        if len(client_id_bytes) < BYTES_CLIENT_ID:
             raise ConnectionError("Failed to read client ID")
         client_id = int.from_bytes(client_id_bytes, byteorder='big')
         return client_id
