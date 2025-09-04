@@ -21,6 +21,7 @@ const BYTES_MESSAGE_ID = 2
 const BYTES_PAYLOAD_LENGTH = 2
 const BYTES_CHUNK_ID_OK_MESSAGE = 4
 const BYTES_CLIENT_ID_FINISH_MESSAGE = 4
+const BYTES_CLIENT_ID_WINNERS_MESSAGE = 4
 
 
 
@@ -220,12 +221,13 @@ func (b *BetSocket) waitForWinners() ([]string, error) {
 		return nil, err
 	}
 	messageId := binary.BigEndian.Uint16(messageIdBuf)
-	if messageId != RECEIVE_WINNERS_MESSAGE_ID {
-		return nil, fmt.Errorf("unexpected message ID: %d", messageId)
-	}
 
 	if messageId == NO_WINNERS_MESSAGE_ID {
 		return nil, fmt.Errorf("no winners found")
+	}
+
+	if messageId != WINNERS_RESULT_MESSAGE_ID {
+		return nil, fmt.Errorf("unexpected message ID: %d", messageId)
 	}
 
 	lengthBuf := make([]byte, BYTES_PAYLOAD_LENGTH)
@@ -237,7 +239,6 @@ func (b *BetSocket) waitForWinners() ([]string, error) {
 		return nil, fmt.Errorf("unexpected payload length: %d", length)
 	}
 
-	// payload
 	payloadBuf := make([]byte, length)
 	if err := b.readFull(payloadBuf); err != nil {
 		return nil, err
