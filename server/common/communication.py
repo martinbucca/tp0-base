@@ -6,7 +6,7 @@ CHUNK_BET_MESSAGE_ID = 12
 CHUNK_FINISH_MESSAGE_ID = 13
 AGENCY_SUCCESS_MESSAGE_ID = 14
 FINISH_MESSAGE_ID = 15
-BYTES_MESSAGE_ID = 1
+BYTES_MESSAGE_ID = 2
 BYTES_PAYLOAD_LENGTH = 2
 BYTES_CHUNK_ID_OK_MESSAGE = 4
 BYTES_CLIENT_ID_FINISH_MESSAGE = 4
@@ -60,12 +60,12 @@ class AgencySocket:
         return None
 
     def send_ok_message(self, chunk_id):
-        message_id = AGENCY_SUCCESS_MESSAGE_ID.to_bytes(1, byteorder='big')
+        message_id = AGENCY_SUCCESS_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
         chunk_id = chunk_id.to_bytes(BYTES_CHUNK_ID_OK_MESSAGE, byteorder='big')
         self.socket.sendall(message_id + chunk_id)
 
     def send_finish_message(self, client_id):
-        message_id = FINISH_MESSAGE_ID.to_bytes(1, byteorder='big')
+        message_id = FINISH_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
         client_id = client_id.to_bytes(BYTES_CLIENT_ID_FINISH_MESSAGE, byteorder='big')
         self.socket.sendall(message_id + client_id)
 
