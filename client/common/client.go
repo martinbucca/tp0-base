@@ -66,8 +66,8 @@ func (c *Client) createBetSocket() error {
 func (c *Client) getWinners() ([]string, error) {
 	var winners []string
 	var err error
-	maxRetries := 3
-	retryInterval := 2 * time.Second
+	maxRetries := 4
+	retryInterval := 10 * time.Second
 
 
 	for attempt := 1; attempt <= maxRetries; attempt++ {
