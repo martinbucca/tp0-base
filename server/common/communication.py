@@ -91,8 +91,10 @@ class AgencySocket:
         message_id = WINNERS_RESULT_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
         winners_data = ",".join(winners_list).encode("utf-8")
         payload_length = len(winners_data)
+        logging.info(f"Sending winners data of length: {payload_length}")
         payload_length_bytes = payload_length.to_bytes(BYTES_PAYLOAD_LENGTH, byteorder='big')
         self.socket.sendall(message_id + payload_length_bytes + winners_data)
+        logging.info(f"Finished sending winners data")
 
     def close(self):
         self.socket.close()
