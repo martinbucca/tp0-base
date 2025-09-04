@@ -1,5 +1,5 @@
 from common.utils import Bet
-
+import logging 
 BET_MESSAGE_ID = "BET"
 SEPARATOR = "|"
 CHUNK_BET_MESSAGE_ID = 12
@@ -41,11 +41,13 @@ class AgencySocket:
         if not message_id_byte:
             raise ConnectionError("Failed to read message ID")
         message_id = int.from_bytes(message_id_byte, byteorder='big')
+        logging.info(f"action: receive_message | result: in_progress | message_id: {message_id}")
         if message_id == CHUNK_BET_MESSAGE_ID:
             length_bytes = self.socket.recv(BYTES_PAYLOAD_LENGTH)
             if len(length_bytes) < BYTES_PAYLOAD_LENGTH:
                 raise ConnectionError("Failed to read message length")
             msg_length = int.from_bytes(length_bytes, byteorder='big')
+            logging.info(f"action: receive_message | result: in_progress | message_id: {message_id} | length: {msg_length}")
             payload = b""
             while len(payload) < msg_length:
                 chunk = self.socket.recv(msg_length - len(payload))
