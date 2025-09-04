@@ -51,7 +51,6 @@ class Server:
                 store_bets(bets_chunk)
                 logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets_chunk)}")
                 agency_client_sock.send_ok_message(chunk_id)
-                total_bets_received += len(bets_chunk)
 
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
