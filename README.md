@@ -27,4 +27,4 @@ Se puede generar el archivo corriendo el siguiente comando por consola:
 `./generar-compose.sh <nombre yaml> <num clientes>`
 
 ### Tests:
-![Tests Ejercicio 1](img/tests.png)
+![Tests Ejercicio 1](img/tests-1.png)
