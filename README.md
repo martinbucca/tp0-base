@@ -100,3 +100,6 @@ El servidor ahora implementa tambien los siguientes mensaje:
         agency_client_sock.send_no_winners()
   ```
 
+### Tests
+
+![Tests ejercicio 7](imgs/tests-7.png)
