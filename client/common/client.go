@@ -89,7 +89,6 @@ func (c *Client) StartClientLoop() {
 	if maxBatchAmount > MAX_AMOUNT_ALLOWED {
 		maxBatchAmount = MAX_AMOUNT_ALLOWED
 	}
-	totalSent := 0
 	for c.is_currently_running {
 		chunk, err := csvReader.ReadChunk(fmt.Sprintf("%d", chunkID), maxBatchAmount)
 		if err != nil {
@@ -98,23 +97,24 @@ func (c *Client) StartClientLoop() {
 		}
 		if len(chunk.Bets) == 0 {
 			log.Infof("action: read_chunk | result: empty | chunk_id: %v", chunkID)
+			if err := c.betSocket.sendFinish(); err != nil {
+				log.Errorf("action: send_finish | result: fail | error: %v", err)
+			}
+			log.Infof("action: send_finish | result: success | client id: %v", c.config.ID)
 			continue
 		}
 		if err := c.betSocket.sendBet(chunk); err != nil {
 			log.Errorf("action: send_message | result: fail | error: %v", err)
 			return
 		}
-		log.Infof("action: send_bet | result: success | cantidad: %d | chunk_id: %d", len(chunk.Bets), chunkID)
+		log.Infof("action: send_bet | result: success | cantidad: %d | client_id: %d | chunk_id: %d", len(chunk.Bets), c.config.ID, chunkID)
 		if err := c.betSocket.waitForAck(chunkID); err != nil {
 			log.Errorf("action: wait_for_ack | result: fail | error: %v", err)
 		}
 
 		log.Infof("action: apuesta_enviada | result: success | cantidad: %d | chunk_id: %d", len(chunk.Bets), chunkID)
-		totalSent += len(chunk.Bets)
 		chunkID++
 	}
-
-	log.Infof("action: apuesta_recibida | result: success | cantidad: %d", totalSent)
 
 	log.Infof("action: exit | result: success")
 	

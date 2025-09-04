@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"strconv"
 )
 
 const BET_SEPARATOR = "|"
@@ -82,10 +83,8 @@ func (b *BetSocket) serializeBetsChunk(betsChunk *BetsChunk) string {
 
 func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 	data := b.serializeBetsChunk(betsChunk)
-	log.Infof("data: %s", data)
 	payload := []byte(data)
 	length := uint16(len(payload))
-	log.Infof("length: %d", length)
 	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
 	binary.BigEndian.PutUint16(messageIdBuf, CHUNK_BET_MESSAGE_ID)
 
@@ -112,6 +111,33 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 	return nil
 }
 
+
+func (b *BetSocket) sendFinish() error {
+	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
+	binary.BigEndian.PutUint16(messageIdBuf, FINISH_MESSAGE_ID)
+
+	totalWritten := 0
+	for totalWritten < BYTES_MESSAGE_ID {
+		n, err := b.conn.Write(messageIdBuf[totalWritten:])
+		if err != nil {
+			return err
+		}
+		totalWritten += n
+	}
+
+	clientIdInt, err := strconv.Atoi(b.clientId)
+	if err != nil {
+		return err
+	}
+	clientIdBuf := make([]byte, BYTES_CLIENT_ID_FINISH_MESSAGE)
+	binary.BigEndian.PutUint32(clientIdBuf, uint32(clientIdInt))
+
+	if _, err := b.conn.Write(clientIdBuf); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 
 
@@ -143,8 +169,42 @@ func (b *BetSocket) waitForAck(expectedChunkId int) error {
 	if chunkId != uint32(expectedChunkId) {
 		return fmt.Errorf("unexpected chunk ID: %d", chunkId)
 	}
-	log.Infof("action: wait_for_ack | result: success | chunk_id: %d", chunkId)
 
+	return nil
+}
+
+
+func (b *BetSocket) waitForFinish() error {
+	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
+	totalRead := 0
+	for totalRead < BYTES_MESSAGE_ID {
+		n, err := b.conn.Read(messageIdBuf[totalRead:])
+		if err != nil {
+			return err
+		}
+		totalRead += n
+	}
+	messageId := binary.BigEndian.Uint16(messageIdBuf)
+	if messageId != FINISH_MESSAGE_ID {
+		return fmt.Errorf("unexpected message ID: %d", messageId)
+	}
+	clientIdBuf := make([]byte, BYTES_CLIENT_ID_FINISH_MESSAGE)
+	totalRead = 0
+	for totalRead < BYTES_CLIENT_ID_FINISH_MESSAGE {
+		n, err := b.conn.Read(clientIdBuf[totalRead:])
+		if err != nil {
+			return err
+		}
+		totalRead += n
+	}
+	clientId := binary.BigEndian.Uint32(clientIdBuf)
+	expectedClientId, err := strconv.Atoi(b.clientId)
+	if err != nil {
+		return err
+	}
+	if clientId != uint32(expectedClientId) {
+		return fmt.Errorf("unexpected client ID: %d", clientId)
+	}
 	return nil
 }
 

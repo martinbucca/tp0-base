@@ -44,11 +44,17 @@ class Server:
         """
         try:
             # TODO: Modify the receive to avoid short-reads
-            chunk_id, bets_chunk = agency_client_sock.receive_bets_chunk()
-            logging.info(f'action: batch_recibido | result: in_progress | cantidad: {len(bets_chunk)}')
-            store_bets(bets_chunk)
-            logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets_chunk)}")
-            agency_client_sock.send_ok_message(chunk_id)
+            total_bets_received = 0
+            while True:
+                chunk_id, bets_chunk = agency_client_sock.receive_bets_chunk()
+                if chunk_id is None:
+                    break
+                store_bets(bets_chunk)
+                logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets_chunk)}")
+                agency_client_sock.send_ok_message(chunk_id)
+                total_bets_received += len(bets_chunk)
+            logging.info(f"action: apuesta_recibida | result: success | cantidad: {total_bets_received}")
+
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
