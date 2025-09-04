@@ -338,7 +338,7 @@ Tanto el servidor como el cliente necesitan manejar la señal SIGTERM para poder
 
 - Se define el mensaje desde el cliente hacia el servidor sendBet para enviar una apuesta y dejar registro en el servidor
 
-![Mensaje SendBet](imgs/protocolo-5.png)
+![Mensaje SendBet](imgs/sendBet.png)
 
 - Los primeros 4 Bytes son fijos y representan el largo del Payload
 - El payload es de tamaño variable y son bytes que representan texto (utf-8). Este texto contiene los campos para la apuesta, separados por el caracter <span style="color:blue">"|" </span>:
