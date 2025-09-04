@@ -163,39 +163,7 @@ func (b *BetSocket) waitForAck(expectedChunkId int) error {
 	return nil
 }
 
-func (b *BetSocket) waitForFinish() error {
-	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	totalRead := 0
-	for totalRead < BYTES_MESSAGE_ID {
-		n, err := b.conn.Read(messageIdBuf[totalRead:])
-		if err != nil {
-			return err
-		}
-		totalRead += n
-	}
-	messageId := binary.BigEndian.Uint16(messageIdBuf)
-	if messageId != FINISH_MESSAGE_ID {
-		return fmt.Errorf("unexpected message ID: %d", messageId)
-	}
-	clientIdBuf := make([]byte, BYTES_CLIENT_ID_FINISH_MESSAGE)
-	totalRead = 0
-	for totalRead < BYTES_CLIENT_ID_FINISH_MESSAGE {
-		n, err := b.conn.Read(clientIdBuf[totalRead:])
-		if err != nil {
-			return err
-		}
-		totalRead += n
-	}
-	clientId := binary.BigEndian.Uint32(clientIdBuf)
-	expectedClientId, err := strconv.Atoi(b.clientId)
-	if err != nil {
-		return err
-	}
-	if clientId != uint32(expectedClientId) {
-		return fmt.Errorf("unexpected client ID: %d", clientId)
-	}
-	return nil
-}
+
 
 func (b *BetSocket) Close() error {
 	return b.conn.Close()

@@ -65,19 +65,14 @@ class AgencySocket:
             logging.info(f"action: deserialize_chunk | result: success | chunk_id: {chunk_id} | bets_count: {len(bets_list)}")
             return (chunk_id, bets_list)
 
-        elif message_id == CHUNK_FINISH_MESSAGE_ID:
-            self.send_finish_message(client_id)
         return None
 
     def send_ok_message(self, chunk_id):
         message_id = AGENCY_SUCCESS_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
-        chunk_id = chunk_id.to_bytes(BYTES_CHUNK_ID_OK_MESSAGE, byteorder='big')
-        self.socket.sendall(message_id + chunk_id)
+        chunk_id_int = int(chunk_id)
+        chunk_id_bytes = chunk_id_int.to_bytes(BYTES_CHUNK_ID_OK_MESSAGE, byteorder='big')
+        self.socket.sendall(message_id + chunk_id_bytes)
 
-    def send_finish_message(self, client_id):
-        message_id = FINISH_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
-        client_id = client_id.to_bytes(BYTES_CLIENT_ID_FINISH_MESSAGE, byteorder='big')
-        self.socket.sendall(message_id + client_id)
 
 
     def close(self):
