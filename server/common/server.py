@@ -2,6 +2,7 @@ import socket
 import sys
 import signal
 import logging
+import threading 
 from common.utils import store_bets, load_bets, has_won
 from common.communication import AgencySocket
 from common.communication import CHUNK_BET_MESSAGE_ID, FINISH_MESSAGE_ID, GET_WINNERS_MESSAGE_ID
@@ -20,6 +21,11 @@ class Server:
         self._number_of_agencies = number_of_agencies
         self._agencies_finished = 0
         self._is_currently_running = True
+        self._lock = threading.Lock()
+        self._winners_by_agency = {}  # agency_id -> [documents of winners]
+        self.agencies = []
+        self.winners_are_ready = threading.Event()
+        
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
     def run(self):
@@ -34,7 +40,10 @@ class Server:
         while self._is_currently_running:
             try:
                 agency_client_sock = self.__accept_new_connection()
-                self.__handle_client_connection(agency_client_sock)
+                t = threading.Thread(target=self.__handle_client_connection, args=(agency_client_sock,))
+                t.start()
+                self.agencies.append(t)
+
             except OSError:
                 if not self._is_currently_running:
                     break 
@@ -53,31 +62,34 @@ class Server:
                 if message_id == FINISH_MESSAGE_ID:
                     client_id = agency_client_sock.receive_client_id()
                     agency_client_sock.send_finish_message(client_id)
-                    self._agencies_finished += 1
-                    logging.info(f"action: agencia_finalizo | result: success | total_agencias_finalizadas: {self._agencies_finished}")
-                    if self._agencies_finished == self._number_of_agencies:
-                        logging.info("action: sorteo | result: success")
+                    with self._lock:
+                        self._agencies_finished += 1
+                        logging.info(f"action: agencia_finalizo | result: success | total_agencias_finalizadas: {self._agencies_finished}")
+                        self.look_winners_for_agency(client_id)
+                        if self._agencies_finished == self._number_of_agencies:
+                            logging.info("action: sorteo | result: success")
+                            self.winners_are_ready.set()
                     break
                 elif message_id == CHUNK_BET_MESSAGE_ID:
                     chunk_id, bets_chunk = agency_client_sock.receive_bets_chunk()
-                    store_bets(bets_chunk)
+                    with self._lock:
+                        store_bets(bets_chunk)
                     logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets_chunk)}")
                     agency_client_sock.send_ok_message(chunk_id)
                 elif message_id == GET_WINNERS_MESSAGE_ID:
                     logging.info("Solicitud de ganadores")
-                    if self._agencies_finished == self._number_of_agencies:
-                        logging.info("solicitud de ganadores aceptada. todas las agencias finalizaron")
-                        client_id = agency_client_sock.receive_client_id()
-                        bets = load_bets()
-                        winners_list = []
-                        for bet in bets:
-                            if bet.agency == client_id and has_won(bet):
-                                winners_list.append(bet.document)
-                        agency_client_sock.send_winners_list(winners_list)
-                    else:
-                        logging.info("solicitud de ganadores denegada. faltan agencias por terminar")
-                        agency_client_sock.send_no_winners()
-                    break
+                    with self._lock:
+                        if self._agencies_finished == self._number_of_agencies:
+                            logging.info("solicitud de ganadores aceptada. todas las agencias finalizaron")
+                            client_id = agency_client_sock.receive_client_id()
+                            if self.winners_are_ready.is_set():
+                                logging.info("solicitud de ganadores aceptada. todas las agencias finalizaron")
+                            winners_list = self._winners_by_agency.get(client_id, [])
+                            agency_client_sock.send_winners_list(winners_list)
+                        else:
+                            logging.info("solicitud de ganadores denegada. faltan agencias por terminar")
+                            agency_client_sock.send_no_winners()
+                        break
                         
 
         except OSError as e:
@@ -98,12 +110,31 @@ class Server:
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
         return AgencySocket(c)
-    
+
+    def look_winners_for_agency(self, agency_id):
+        """
+        Look up winners for a specific agency from the cache.
+        """
+        logging.info(f"action: look_winners | result: in_progress | agency_id: {agency_id}")
+        winners = self._winners_by_agency.get(agency_id, [])
+        logging.info(f"action: look_winners | result: success | agency_id: {agency_id} | winners_count: {len(winners)}")
+        return winners
+        winners = []
+        for bet in bets:
+            if bet.agency == agency_id and has_won(bet):
+                winners.append(bet.document)
+        self._winners_by_agency[agency_id] = winners
+        logging.info(f"action: look_winners | result: success | agency_id: {agency_id} | cantidad: {len(winners)}")
+
     def shutdown(self):
         try:
             self._is_currently_running = False
             self._server_socket.close()
             logging.info("action: shutdown | result: success | details: server socket closed")
+            logging.info("Esperando que terminen todas las conexiones...")
+            for t in self.agencies:
+                t.join()
+            logging.info("Todos los threads finalizaron correctamente.")
         except Exception as e:
             logging.error(f"action: shutdown | result: fail | error: {e}")
 
