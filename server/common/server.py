@@ -47,7 +47,7 @@ class Server:
             chunk_id, bets_chunk = agency_client_sock.receive_bets_chunk()
             logging.info(f'action: batch_recibido | result: in_progress | cantidad: {len(bets_chunk)}')
             store_bets(bets_chunk)
-            logging.info(f"action: apuesta_recibida | result: success | cantidad: ${len(bets_chunk)}")
+            logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets_chunk)}")
             agency_client_sock.send_ok_message(chunk_id)
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")

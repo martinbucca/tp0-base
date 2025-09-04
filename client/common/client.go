@@ -10,7 +10,7 @@ import (
 
 var log = logging.MustGetLogger("log")
 const AGENCY_SUCCESS_MESSAGE = "OK"
-const MAX_AMOUNT_ALLOWED = 50
+const MAX_AMOUNT_ALLOWED = 150
 
 type ClientConfig struct {
 	ID            string
