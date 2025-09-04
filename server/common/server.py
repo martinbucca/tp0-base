@@ -47,7 +47,7 @@ class Server:
             total_bets_received = 0
             while True:
                 chunk_id, bets_chunk = agency_client_sock.receive_bets_chunk()
-                if chunk_id is None:
+                if len(bets_chunk) == 0:
                     break
                 store_bets(bets_chunk)
                 logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets_chunk)}")

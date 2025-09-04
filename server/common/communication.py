@@ -1,4 +1,5 @@
 from common.utils import Bet
+import logging
 BET_MESSAGE_ID = "BET"
 SEPARATOR = "|"
 CHUNK_BET_MESSAGE_ID = 12
@@ -59,10 +60,12 @@ class AgencySocket:
             if len(client_id_bytes) < BYTES_CLIENT_ID_FINISH_MESSAGE:
                 raise ConnectionError("Failed to read client ID")
             client_id = int.from_bytes(client_id_bytes, byteorder='big')
-            self.send_finish_message(client_id)
-            return (None, [])
+            logging.info(f"FINISH REQUESTED for client id: {client_id}")
 
-        return None
+            self.send_finish_message(client_id)
+            return ('', [])
+
+        return ('', [])
 
     def send_ok_message(self, chunk_id):
         message_id = AGENCY_SUCCESS_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
