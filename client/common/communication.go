@@ -112,22 +112,7 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 	return nil
 }
 
-func (b *BetSocket) sendFinish() error {
-	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	binary.BigEndian.PutUint16(messageIdBuf, FINISH_MESSAGE_ID)
 
-	totalWritten := 0
-	for totalWritten < BYTES_MESSAGE_ID {
-		n, err := b.conn.Write(messageIdBuf[totalWritten:])
-		if err != nil {
-			return err
-		}
-		totalWritten += n
-	}
-
-
-	return nil
-}
 
 
 
