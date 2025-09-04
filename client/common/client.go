@@ -62,13 +62,15 @@ func (c *Client) createBetSocket() error {
 }
 
 func (c *Client) getWinners() ([]string, error) {
-	// Send request to server
 	if err := c.betSocket.sendGetWinners(); err != nil {
 		return nil, err
 	}
 
-	// Wait for response
-	return c.betSocket.receiveWinners()
+	winners, err := c.betSocket.waitForWinners()
+	if err != nil {
+		return nil, err
+	}
+	return winners, nil
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
