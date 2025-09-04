@@ -83,6 +83,7 @@ func (b *BetSocket) serializeBetsChunk(betsChunk *BetsChunk) string {
 
 func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 	data := b.serializeBetsChunk(betsChunk)
+	log.Infof("data: %s", data)
 	payload := []byte(data)
 	length := uint16(len(payload))
 
