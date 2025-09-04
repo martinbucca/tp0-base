@@ -86,7 +86,7 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 	log.Infof("data: %s", data)
 	payload := []byte(data)
 	length := uint16(len(payload))
-
+	log.Infof("length: %d", length)
 	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
 	binary.BigEndian.PutUint16(messageIdBuf, CHUNK_BET_MESSAGE_ID)
 
