@@ -51,7 +51,9 @@ class Server:
             while True:
                 message_id = agency_client_sock.receive_message_id()
                 if message_id == FINISH_MESSAGE_ID:
+                    logging.info("Finished request!")
                     client_id = agency_client_sock.receive_client_id()
+                    logging.info(f"Client ID who requested finish: {client_id}")
                     agency_client_sock.send_finish_message(client_id)
                     self._agencies_finished += 1
                     logging.info(f"action: agencia_finalizo | result: success | total_agencias_finalizadas: {self._agencies_finished}")

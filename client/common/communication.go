@@ -20,8 +20,7 @@ const WINNERS_RESULT_MESSAGE_ID = uint16(17)
 const BYTES_MESSAGE_ID = 2
 const BYTES_PAYLOAD_LENGTH = 2
 const BYTES_CHUNK_ID_OK_MESSAGE = 4
-const BYTES_CLIENT_ID_FINISH_MESSAGE = 4
-const BYTES_CLIENT_ID_WINNERS_MESSAGE = 4
+const BYTES_CLIENT_ID = 4
 
 
 
@@ -141,7 +140,7 @@ func (b *BetSocket) sendFinish() error {
 	if err != nil {
 		return err
 	}
-	clientIdBuf := make([]byte, BYTES_CLIENT_ID_FINISH_MESSAGE)
+	clientIdBuf := make([]byte, BYTES_CLIENT_ID)
 	binary.BigEndian.PutUint32(clientIdBuf, uint32(clientIdInt))
 	return b.writeFull(clientIdBuf)
 }
@@ -155,7 +154,7 @@ func (b *BetSocket) sendGetWinners() error {
 	if err != nil {
 		return err
 	}
-	clientIdBuf := make([]byte, BYTES_CLIENT_ID_WINNERS_MESSAGE)
+	clientIdBuf := make([]byte, BYTES_CLIENT_ID)
 	binary.BigEndian.PutUint32(clientIdBuf, uint32(clientIdInt))
 	return b.writeFull(clientIdBuf)
 }
@@ -195,7 +194,7 @@ func (b *BetSocket) waitForFinish() error {
 	}
 
 	// client id
-	clientIdBuf := make([]byte, BYTES_CLIENT_ID_FINISH_MESSAGE)
+	clientIdBuf := make([]byte, BYTES_CLIENT_ID)
 	if err := b.readFull(clientIdBuf); err != nil {
 		return err
 	}
