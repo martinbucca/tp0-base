@@ -9,7 +9,6 @@ import (
 )
 
 var log = logging.MustGetLogger("log")
-const AGENCY_SUCCESS_MESSAGE = "OK"
 const MAX_AMOUNT_ALLOWED = 150
 
 type ClientConfig struct {
@@ -102,7 +101,7 @@ func (c *Client) StartClientLoop() {
 			log.Infof("action: send_finish | result: success | client id: %v", c.config.ID)
 			break
 		}
-		if err := c.betSocket.sendBet(chunk); err != nil {
+		if err := c.betSocket.sendBets(chunk); err != nil {
 			log.Errorf("action: send_message | result: fail | error: %v", err)
 			return
 		}

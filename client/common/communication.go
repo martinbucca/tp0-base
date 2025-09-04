@@ -81,7 +81,7 @@ func (b *BetSocket) serializeBetsChunk(betsChunk *BetsChunk) string {
 
 
 
-func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
+func (b *BetSocket) sendBets(betsChunk *BetsChunk) error {
 	data := b.serializeBetsChunk(betsChunk)
 	payload := []byte(data)
 	length := uint16(len(payload))

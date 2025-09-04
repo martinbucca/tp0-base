@@ -14,51 +14,81 @@ Por su parte, el servidor deberá responder con éxito solamente si todas las ap
 
 ### Solucion Ejercicio N°6:
 
+
+### Protocolo
+
+### Client
+
+El cliente puede enviarle los siguientes mensajes al servidor:
+- SendBets
+
+  ![sendBets message](imgs/sendBets.png)
+
+
+  El mensaje esta compuesto por:
+  - 2 Bytes para el ID del mensaje (fijos)
+  - 2 Bytes para el largo del payload (fijos)
+  - Payload cuyos bytes representan una cadena de texto (utf-8) que esta separada por el caracter <span style="color:red">"&" </span> y tiene los siguientes elementos:
+    - Id Cliente (agencia)
+    - Id Chunk
+    - Apuestas, donde cada apuesta a su vez es una cadena de texto que separa los campos de la apuesta por el caracter <span style="color:blue">"|" </span>:
+      - Nombre
+      - Apellido
+      - Documento
+      - Fecha de Nacimiento
+      - Numero de apuesta
+    
+    Ejemplo de un posible payload: 
+    1<span style="color:red">&</span>43<span style="color:red">&</span>Santiago Lionel<span style="color:blue">|</span>Lorca<span style="color:blue">|</span>30904465<span style="color:blue">|</span>1999-03-17<span style="color:blue">|</span>2201<span style="color:red">&</span>Joaquin Sebastian<span style="color:blue">|</span>Rivera<span style="color:blue">|</span>21104770<span style="color:blue">|</span>1980-12-11<span style="color:blue">|</span>7737<span style="color:red">&</span>...
+
+- sendFinsih:
+
+  ![sendFinish message](imgs/sendFinish.png)
+
+  El mensaje esta compuesto por:
+  - 2 Bytes para el ID del mensaje (fijos)
+  - 4 Bytes para el ID de la agencia (fijos)
+
+
+### Server
+
+El server puede enviarle los siguientes mensajes al Cliente:
+  - sendOk
+    
+    ![sendOk](imgs/sendOk.png)
+
+    El mensaje esta compuesto por:
+      - 2 Bytes fijos para el ID del mensaje
+      - 4 Bytes fijos para el chunk Id
+
+
+  - sendFinishACK
+
+    ![sendFinish](imgs/sendFinish.png)
+
+    El mensaje es igual al que envia el cliente. Esta compuesto por:
+      - 2 Bytes fijos para el ID del mensaje
+      - 4 Bytes fijos para el ID de la agencia
+
+
+
+
+
 Se tiene un CSVReader que lee un archivo csv linea por linea. 
 Puede leer un chunk, recibiendo la cantiad de apuestas que quiere que tenga ese chunk como maximo y un id para ese chunk:
 
 `func (r *CSVReader) ReadChunk(chunkId string, maxAmount int) (*BetsChunk, error)`
 Lee hasta `maxAmount` lineas del archivo CSV y devuelve un struct que tiene las apuestas y el id del chunk:
-```
+```go
 type BetsChunk struct {
 	Bets []*Bet
 	Id   string
 }
 ```
 
-Si la lista esta vacia quiere decir que ya termino de leer el archivo csv.
-Se envia un mensaje de finalizacion con un ID especifico y sin payload para indicar que se enviaron todos los chunks.
-
-### Protocolo
-
-#### ID Mensajes
-- CHUNK DE APUESTAS: 12
-- FINISH: 13
-
-El protocolo define el paquete enviado de la siguiente manera:
-- ID DEL MENSAJE: 1 BYTE (fijo)
-- LARGO DEL PAYLOAD: 2 BYTES (fijos)
-- PAYLOAD: variable:
-    - El payload va a tener lo siguiente:
-        - ID cliente
-        - ID chunk
-        - Apuestas:
-            Cada apuesta va a estar compuesta a su vez por:
-                - Nombre
-                - Apellido
-                - Documento
-                - Fecha Nacimiento
-                - Numero apuesta
-            En donde cada campo va a estar separado por el caracter `|`
-    En donde cada campo y las apuestas entre si van a estar separadas por el caracter `&`
-
-
-![Bytes protocolo](imgs/bytes.png)
-
-Ejemplo de payload:
-
-1<span style="color:red">&</span>43<span style="color:red">&</span>Santiago Lionel<span style="color:blue">|</span>Lorca<span style="color:blue">|</span>30904465<span style="color:blue">|</span>1999-03-17<span style="color:blue">|</span>2201<span style="color:red">&</span>Joaquin Sebastian<span style="color:blue">|</span>Rivera<span style="color:blue">|</span>21104770<span style="color:blue">|</span>1980-12-11<span style="color:blue">|</span>7737<span style="color:red">&</span>...
-
-Donde:
-- 1: Id cliente
-- 43: Id Chunk
+1. Se envia el mensaje `sendBets` al servidor con el chunk
+2. Se espera por el ack de ese mensaje
+3. El servidor recibe el mensaje sendBets, almacena las apuestas y envia el ack para ese mensaje con sendOk que incluye el **chunk Id** del chunk almacenado.
+4. Cuando se termina de leer todo el archivo el cliente envia el mensaje `SendFinish` con su ID
+5. El servidor responde un ack con un mensaje igual `sendFinish` y el id de la agencia correspondiente.
+6. El Cliente recibe el ack y finaliza.
