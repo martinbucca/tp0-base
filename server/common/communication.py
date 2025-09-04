@@ -54,7 +54,9 @@ class AgencySocket:
                 if not chunk:
                     raise ConnectionError("Connection closed before receiving full message")
                 payload += chunk
+            logging.info(f"action: receive_message | result: in_progress | message_id: {message_id} | length: {msg_length}")
             chunk_id, bets_list = self.deserialize_chunk(payload)
+            logging.info(f"action: deserialize_chunk | result: success | chunk_id: {chunk_id} | bets_count: {len(bets_list)}")
             return (chunk_id, bets_list)
 
         elif message_id == CHUNK_FINISH_MESSAGE_ID:
