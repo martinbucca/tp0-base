@@ -67,11 +67,13 @@ class Server:
                     if self._agencies_finished == self._number_of_agencies:
                         logging.info("solicitud de ganadores aceptada. todas las agencias finalizaron")
                         client_id = agency_client_sock.receive_client_id()
+                        logging.info(f"Client ID who requested for winners: {client_id}")
                         bets = load_bets()
                         winners_list = []
                         for bet in bets:
                             if bet.agency == client_id and has_won(bet):
                                 winners_list.append(bet.document)
+                        logging.info(f"Winners: {winners_list}")
                         agency_client_sock.send_winners_list(winners_list)
                         break
                     else:
