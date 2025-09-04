@@ -27,7 +27,7 @@ class Server:
             try:
                 client_sock = self.__accept_new_connection()
                 self.__handle_client_connection(client_sock)
-            except OSError:
+            except (OSError, socket.timeout):
                 if not self._is_currently_running:
                     break 
 
