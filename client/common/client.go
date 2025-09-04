@@ -106,7 +106,7 @@ func (c *Client) StartClientLoop() {
 			log.Errorf("action: send_message | result: fail | error: %v", err)
 			return
 		}
-		log.Infof("action: send_bet | result: success | chunk_id: %d", chunkID)
+		log.Infof("action: send_bet | result: success | cantidad: %d | chunk_id: %d", len(chunk.Bets), chunkID)
 		if err := c.betSocket.waitForAck(chunkID); err != nil {
 			log.Errorf("action: wait_for_ack | result: fail | error: %v", err)
 		}
