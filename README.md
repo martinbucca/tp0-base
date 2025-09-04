@@ -3,11 +3,20 @@ Modificar el cliente y el servidor para lograr que realizar cambios en el archiv
 
 ### Solucion Ejercicio N°2:
 
-En el archivo docker-compose-dev.yaml tanto para el server como para el cliente se agrega un volumen que monta los archivos de configuracion respectivamente en cada uno de los contenedores, haciendo que los cambios que se hagan en los archivos locales se reflejen automaticamente en los contenedores sin necesidad de reconstruir las imagenes. Esto permite persistir los archivos de configuracion. 
+En el archivo `docker-compose-dev.yaml`, tanto para el servidor como para el cliente, se agrega un volumen que monta los archivos de configuración respectivos en cada uno de los contenedores. Esto permite que los cambios realizados en los archivos locales se reflejen automáticamente en los contenedores, sin necesidad de reconstruir las imágenes, y que la configuración persista por fuera de la imagen.
 
-Se agrega al .dockerignore los archivos de configuracion ya que al crear un volumen en el container no es necesario copiarlos al crear las imagenes.
+Además, se agregan los archivos de configuración al `.dockerignore`, ya que al utilizar volúmenes no es necesario copiarlos al crear las imágenes.
 
-Ya no es necesario hacer rebuild de las imagenes cada vez que se hace un cambio en los archivos de configuracion. Los cambios se van a ver tambien en los contenedores.
+De esta manera, ya no es necesario reconstruir las imágenes cada vez que se modifica la configuración; los cambios se verán reflejados directamente en los contenedores.
+
+
+```
+volumes:
+      - ./server/config.ini:/config.ini
+
+volumes:
+      - ./client/config.yaml:/config.yaml
+```
 
 ### Tests
 
