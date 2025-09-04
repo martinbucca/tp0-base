@@ -57,6 +57,7 @@ class Server:
                     logging.info(f"action: agencia_finalizo | result: success | total_agencias_finalizadas: {self._agencies_finished}")
                     if self._agencies_finished == self._number_of_agencies:
                         logging.info("action: sorteo | result: success")
+                    break
                 elif message_id == CHUNK_BET_MESSAGE_ID:
                     chunk_id, bets_chunk = agency_client_sock.receive_bets_chunk()
                     store_bets(bets_chunk)

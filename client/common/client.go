@@ -69,16 +69,33 @@ func (c *Client) getWinners() ([]string, error) {
 	retryInterval := 5 * time.Second
 
 	for {
+		if err := c.createBetSocket(); err != nil {
+			log.Criticalf(
+				"action: connect | result: fail | client_id: %v | error: %v",
+				c.config.ID,
+				err,
+			)
+			return
+		}
+
 		if err = c.betSocket.sendGetWinners(); err != nil {
 			return nil, err
 		}
 
 		winners, err = c.betSocket.waitForWinners()
-		if err == nil && len(winners) > 0 {
+		if err == nil {
 			return winners, nil
 		}
 
+		if err := c.betSocket.Close(); err != nil {
+			log.Errorf("action: close_socket | result: fail | error: %v", err)
+		}
+
 		time.Sleep(retryInterval)
+		if c.betSocket != nil {
+			c.betSocket.Close()
+		}
+
 	}
 }
 
@@ -141,6 +158,13 @@ func (c *Client) StartClientLoop() {
 		return
 	}
 
+	if c.betSocket != nil {
+		if err := c.betSocket.Close(); err != nil {
+			log.Errorf("action: close_socket | result: fail | error: %v", err)
+			return
+		}
+	}
+
 	log.Infof("action: ack_for_finish | result: success")
 
 	winners, err := c.getWinners()
@@ -153,7 +177,4 @@ func (c *Client) StartClientLoop() {
 
 	log.Infof("action: exit | result: success")
 	
-	if c.betSocket != nil {
-		c.betSocket.Close()
-	}
 }
