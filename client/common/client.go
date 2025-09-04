@@ -73,6 +73,7 @@ func (c *Client) StartClientLoop() {
 		log.Criticalf("action: open_csv | result: fail | error: %v", err)
 		return
 	}
+	log.Infof("action: open_csv | result: success | client_id: %v", c.config.ID)
 	defer csvReader.Close()
 
 	if err := c.createBetSocket(); err != nil {
@@ -105,6 +106,7 @@ func (c *Client) StartClientLoop() {
 			log.Errorf("action: send_message | result: fail | error: %v", err)
 			return
 		}
+		log.Infof("action: send_bet | result: success | chunk_id: %d", chunkID)
 		if err := c.betSocket.waitForAck(chunkID); err != nil {
 			log.Errorf("action: wait_for_ack | result: fail | error: %v", err)
 		}
