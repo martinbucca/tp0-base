@@ -600,3 +600,9 @@ Con las modificaciones de este ejercicio, ahora el servidor puede procesar vario
 ### Tests
 
 ![tests ejercicio 8](imgs/tests-8.png)
+
+
+
+### Tests de todos los ejercicios
+
+![tests todos los ejercicios](imgs/tests.png)
