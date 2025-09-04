@@ -65,7 +65,7 @@ class Server:
                     with self._lock:
                         self._agencies_finished += 1
                         logging.info(f"action: agencia_finalizo | result: success | total_agencias_finalizadas: {self._agencies_finished}")
-                        self.look_winners_for_agency(client_id)
+                        self.store_winners_for_agency(client_id)
                         if self._agencies_finished == self._number_of_agencies:
                             logging.info("action: sorteo | result: success")
                             self.winners_are_ready.set()
@@ -111,20 +111,16 @@ class Server:
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
         return AgencySocket(c)
 
-    def look_winners_for_agency(self, agency_id):
-        """
-        Look up winners for a specific agency from the cache.
-        """
-        logging.info(f"action: look_winners | result: in_progress | agency_id: {agency_id}")
+    def store_winners_for_agency(self, agency_id):
+        logging.info(f"action: store_winners | result: in_progress | agency_id: {agency_id}")
         winners = self._winners_by_agency.get(agency_id, [])
-        logging.info(f"action: look_winners | result: success | agency_id: {agency_id} | winners_count: {len(winners)}")
-        return winners
+        logging.info(f"action: store_winners | result: success | agency_id: {agency_id} | winners_count: {len(winners)}")
         winners = []
         for bet in bets:
             if bet.agency == agency_id and has_won(bet):
                 winners.append(bet.document)
         self._winners_by_agency[agency_id] = winners
-        logging.info(f"action: look_winners | result: success | agency_id: {agency_id} | cantidad: {len(winners)}")
+        logging.info(f"action: store_winners | result: success | agency_id: {agency_id} | cantidad: {len(winners)}")
 
     def shutdown(self):
         try:
