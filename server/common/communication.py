@@ -22,6 +22,23 @@ class AgencySocket:
     def __init__(self, socket):
         self.socket = socket
 
+    def _send_all(self, data: bytes):
+        total_sent = 0
+        while total_sent < len(data):
+            sent = self.socket.send(data[total_sent:])
+            if sent == 0:
+                raise ConnectionError("Socket connection broken during send")
+            total_sent += sent
+
+    def _receive_all(self, expected_bytes: int) -> bytes:
+        data = b""
+        while len(data) < expected_bytes:
+            chunk = self.socket.recv(expected_bytes - len(data))
+            if not chunk:
+                raise ConnectionError("Socket connection broken during receive")
+            data += chunk
+        return data
+
     def deserialize_chunk(self, payload: bytes) -> (str, list[Bet]):
         payload_decoded = payload.decode("utf-8")
         fields = payload_decoded.split("&")
@@ -42,26 +59,16 @@ class AgencySocket:
         return (chunk_id, bets_list)
 
     def receive_message_id(self):
-        message_id_bytes = b""
-        while len(message_id_bytes) < BYTES_MESSAGE_ID:
-            chunk = self.socket.recv(BYTES_MESSAGE_ID - len(message_id_bytes))
-            if not chunk:
-                raise ConnectionError("Failed to read message ID")
-            message_id_bytes += chunk
+        message_id_bytes = self._receive_all(BYTES_MESSAGE_ID)
         message_id = int.from_bytes(message_id_bytes, byteorder='big')
         return message_id
 
     def receive_bets_chunk(self):
-        length_bytes = self.socket.recv(BYTES_PAYLOAD_LENGTH)
+        length_bytes = self._receive_all(BYTES_PAYLOAD_LENGTH)
         if len(length_bytes) < BYTES_PAYLOAD_LENGTH:
             raise ConnectionError("Failed to read message length")
         msg_length = int.from_bytes(length_bytes, byteorder='big')
-        payload = b""
-        while len(payload) < msg_length:
-            chunk = self.socket.recv(msg_length - len(payload))
-            if not chunk:
-                raise ConnectionError("Connection closed before receiving full message")
-            payload += chunk
+        payload = self._receive_all(msg_length)
         chunk_id, bets_list = self.deserialize_chunk(payload)
         return (chunk_id, bets_list)
 
@@ -69,20 +76,20 @@ class AgencySocket:
         message_id = ACK_CHUNK_BET_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
         chunk_id_int = int(chunk_id)
         chunk_id_bytes = chunk_id_int.to_bytes(BYTES_CHUNK_ID_OK_MESSAGE, byteorder='big')
-        self.socket.sendall(message_id + chunk_id_bytes)
+        self._send_all(message_id + chunk_id_bytes)
 
     def send_finish_message(self, client_id):
         message_id = FINISH_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
         client_id = client_id.to_bytes(BYTES_CLIENT_ID, byteorder='big')
         finish_message_bytes = message_id + client_id
-        self.socket.sendall(finish_message_bytes)
+        self._send_all(finish_message_bytes)
 
     def send_no_winners(self):
         message_id = NO_WINNERS_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
-        self.socket.sendall(message_id)
+        self._send_all(message_id)
 
     def receive_client_id(self):
-        client_id_bytes = self.socket.recv(BYTES_CLIENT_ID)
+        client_id_bytes = self._receive_all(BYTES_CLIENT_ID)
         if len(client_id_bytes) < BYTES_CLIENT_ID:
             raise ConnectionError("Failed to read client ID")
         client_id = int.from_bytes(client_id_bytes, byteorder='big')
@@ -94,7 +101,7 @@ class AgencySocket:
         payload_length = len(winners_data)
         logging.info(f"Sending winners data of length: {payload_length}")
         payload_length_bytes = payload_length.to_bytes(BYTES_PAYLOAD_LENGTH, byteorder='big')
-        self.socket.sendall(message_id + payload_length_bytes + winners_data)
+        self._send_all(message_id + payload_length_bytes + winners_data)
         logging.info(f"Finished sending winners data")
 
     def close(self):
