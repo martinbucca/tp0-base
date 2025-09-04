@@ -2,6 +2,7 @@ from common.utils import Bet
 import logging
 BET_MESSAGE_ID = "BET"
 SEPARATOR = "|"
+WINNERS_SEPARATOR = ","
 CHUNK_BET_MESSAGE_ID = 12
 ACK_CHUNK_BET_MESSAGE_ID = 13
 FINISH_MESSAGE_ID = 14
@@ -89,7 +90,7 @@ class AgencySocket:
 
     def send_winners_list(self, winners_list):
         message_id = WINNERS_RESULT_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
-        winners_data = ",".join(winners_list).encode("utf-8")
+        winners_data = WINNERS_SEPARATOR.join(winners_list).encode("utf-8")
         payload_length = len(winners_data)
         logging.info(f"Sending winners data of length: {payload_length}")
         payload_length_bytes = payload_length.to_bytes(BYTES_PAYLOAD_LENGTH, byteorder='big')

@@ -10,6 +10,7 @@ import (
 
 const BET_SEPARATOR = "|"
 const CHUNK_SEPARATOR = "&"
+const WINNERS_SEPARATOR = ","
 const CHUNK_BET_MESSAGE_ID = uint16(12)
 const ACK_CHUNK_BET_MESSAGE_ID = uint16(13)
 const FINISH_MESSAGE_ID = uint16(14)
@@ -211,7 +212,7 @@ func (b *BetSocket) waitForFinish() error {
 }
 
 func (b *BetSocket) deserializeWinners(payload []byte) []string {
-	return strings.Split(string(payload), ",")
+	return strings.Split(string(payload), WINNERS_SEPARATOR)
 }
 
 func (b *BetSocket) waitForWinners() ([]string, error) {
