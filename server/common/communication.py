@@ -19,7 +19,11 @@ class AgencySocket:
         self.socket = socket
 
     def deserialize_chunk(payload: bytes) -> (str, list[Bet]):
-        fields = payload.decode("utf-8").split("&")
+        payload_decoded = payload.decode("utf-8")
+        logging.info(f"{payload_decoded}")
+        fields = payload_decoded.split("&")
+        logging.info(f"action: deserialize_chunk | result: in_progress | payload_length: {len(payload)} | fields_count: {len(fields)}")
+
         logging.info(f"action: deserialize_chunk | result: in_progress | payload_length: {len(payload)} | fields_count: {len(fields)}")
         client_id = fields[0]
         chunk_id = fields[1]
