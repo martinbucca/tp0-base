@@ -75,7 +75,7 @@ func (c *Client) getWinners() ([]string, error) {
 				c.config.ID,
 				err,
 			)
-			return
+			return nil, err
 		}
 
 		if err = c.betSocket.sendGetWinners(); err != nil {
