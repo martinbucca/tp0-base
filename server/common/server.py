@@ -22,7 +22,6 @@ class Server:
         self._agencies_finished = 0
         self._is_currently_running = True
         self._lock = threading.Lock()
-        self._winners_by_agency = {}  # agency_id -> [documents of winners]
         self.agencies = []
         self.winners_are_ready = threading.Event()
         
@@ -66,7 +65,6 @@ class Server:
                     with self._lock:
                         self._agencies_finished += 1
                         logging.info(f"action: agencia_finalizo | result: success | total_agencias_finalizadas: {self._agencies_finished}")
-                        self.store_winners_for_agency(client_id)
                         if self._agencies_finished == self._number_of_agencies:
                             logging.info("action: sorteo | result: success")
                             self.winners_are_ready.set()
@@ -85,8 +83,12 @@ class Server:
                             client_id = agency_client_sock.receive_client_id()
                             if self.winners_are_ready.is_set():
                                 logging.info("solicitud de ganadores aceptada. todas las agencias finalizaron")
-                            winners_list = self._winners_by_agency.get(client_id, [])
-                            agency_client_sock.send_winners_list(winners_list)
+                                bets = load_bets()
+                                winners_list = []
+                                for bet in bets:
+                                    if bet.agency == client_id and has_won(bet):
+                                        winners_list.append(bet.document)
+                                agency_client_sock.send_winners_list(winners_list)
                         else:
                             logging.info("solicitud de ganadores denegada. faltan agencias por terminar")
                             agency_client_sock.send_no_winners()
@@ -112,16 +114,6 @@ class Server:
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
         return AgencySocket(c)
 
-    def store_winners_for_agency(self, agency_id):
-        with self._lock:
-            bets = load_bets()
-            winners = self._winners_by_agency.get(agency_id, [])
-            winners = []
-            for bet in bets:
-                if bet.agency == agency_id and has_won(bet):
-                    winners.append(bet.document)
-        self._winners_by_agency[agency_id] = winners
-        logging.info(f"action: store_winners | result: success | agency_id: {agency_id} | cantidad: {len(winners)}")
 
     def shutdown(self):
         try:
