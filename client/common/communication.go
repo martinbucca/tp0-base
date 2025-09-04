@@ -8,12 +8,12 @@ import (
 
 const BET_SEPARATOR = "|"
 const CHUNK_SEPARATOR = "&"
-const CHUNK_BET_MESSAGE_ID = uint8(12)
-const CHUNK_FINISH_MESSAGE_ID = uint8(13)
-const AGENCY_SUCCESS_MESSAGE_ID = uint8(14)
-const FINISH_MESSAGE_ID = uint8(15)
+const CHUNK_BET_MESSAGE_ID = uint16(12)
+const CHUNK_FINISH_MESSAGE_ID = uint16(13)
+const AGENCY_SUCCESS_MESSAGE_ID = uint16(14)
+const FINISH_MESSAGE_ID = uint16(15)
 
-const BYTES_MESSAGE_ID = 1
+const BYTES_MESSAGE_ID = 2
 const BYTES_PAYLOAD_LENGTH = 2
 const BYTES_CHUNK_ID_OK_MESSAGE = 4
 const BYTES_CLIENT_ID_FINISH_MESSAGE = 4
@@ -86,10 +86,10 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 	length := uint16(len(payload))
 
 	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	binary.Write(messageIdBuf, binary.BigEndian, CHUNK_BET_MESSAGE_ID)
+	binary.BigEndian.PutUint16(messageIdBuf, CHUNK_BET_MESSAGE_ID)
 
 	lenBuf := make([]byte, BYTES_PAYLOAD_LENGTH)
-	binary.Write(lenBuf, binary.BigEndian, length)
+	binary.BigEndian.PutUint16(lenBuf, length)
 
 	totalWritten := 0
 	for totalWritten < int(length) {
@@ -122,7 +122,7 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 
 func (b *BetSocket) sendFinish() error {
 	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	binary.Write(messageIdBuf, binary.BigEndian, FINISH_MESSAGE_ID)
+	binary.BigEndian.PutUint16(messageIdBuf, FINISH_MESSAGE_ID)
 
 	totalWritten := 0
 	for totalWritten < BYTES_MESSAGE_ID {
@@ -149,7 +149,7 @@ func (b *BetSocket) waitForAck(expectedChunkId int) error {
 		}
 		totalRead += n
 	}
-	messageId := binary.BigEndian.Uint8(messageIdBuf)
+	messageId := binary.BigEndian.Uint16(messageIdBuf)
 	if messageId != AGENCY_SUCCESS_MESSAGE_ID {
 		return fmt.Errorf("unexpected message ID: %d", messageId)
 	}
@@ -180,7 +180,7 @@ func (b *BetSocket) waitForFinish() error {
 		}
 		totalRead += n
 	}
-	messageId := binary.BigEndian.Uint8(messageIdBuf)
+	messageId := binary.BigEndian.Uint16(messageIdBuf)
 	if messageId != FINISH_MESSAGE_ID {
 		return fmt.Errorf("unexpected message ID: %d", messageId)
 	}
