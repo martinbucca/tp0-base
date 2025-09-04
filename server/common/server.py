@@ -112,11 +112,13 @@ class Server:
         return AgencySocket(c)
 
     def store_winners_for_agency(self, agency_id):
-        winners = self._winners_by_agency.get(agency_id, [])
-        winners = []
-        for bet in bets:
-            if bet.agency == agency_id and has_won(bet):
-                winners.append(bet.document)
+        with self._lock:
+            bets = load_bets()
+            winners = self._winners_by_agency.get(agency_id, [])
+            winners = []
+            for bet in bets:
+                if bet.agency == agency_id and has_won(bet):
+                    winners.append(bet.document)
         self._winners_by_agency[agency_id] = winners
         logging.info(f"action: store_winners | result: success | agency_id: {agency_id} | cantidad: {len(winners)}")
 
