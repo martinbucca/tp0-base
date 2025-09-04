@@ -101,7 +101,7 @@ func (c *Client) StartClientLoop() {
 				log.Errorf("action: send_finish | result: fail | error: %v", err)
 			}
 			log.Infof("action: send_finish | result: success | client id: %v", c.config.ID)
-			continue
+			break
 		}
 		if err := c.betSocket.sendBet(chunk); err != nil {
 			log.Errorf("action: send_message | result: fail | error: %v", err)
