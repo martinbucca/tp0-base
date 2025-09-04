@@ -106,10 +106,21 @@ func (c *Client) StartClientLoop() {
 			log.Errorf("action: send_message | result: fail | error: %v", err)
 			return
 		}
-		// Wait to receive an ack with the chunk Id
+		if err := c.betSocket.waitForAck(chunkID); err != nil {
+			log.Errorf("action: wait_for_ack | result: fail | error: %v", err)
+		}
+
+		log.Infof("action: apuesta_enviada | result: success | cantidad: %d | chunk_id: %d", len(chunk.Bets), chunkID)
+
 		chunkID++
 	}
-	if c.betSocket != nil  {
+	if err := c.betSocket.waitForFinish(); err != nil {
+		log.Errorf("action: wait_for_finish | result: fail | error: %v", err)
+	}
+
+	log.Infof("action: exit | result: success")
+	
+	if c.betSocket != nil {
 		c.betSocket.Close()
 	}
 }

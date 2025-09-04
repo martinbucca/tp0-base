@@ -11,8 +11,14 @@ const BET_SEPARATOR = "|"
 const CHUNK_SEPARATOR = "&"
 const CHUNK_BET_MESSAGE_ID = uint8(12)
 const CHUNK_FINISH_MESSAGE_ID = uint8(13)
+const AGENCY_SUCCESS_MESSAGE_ID = uint8(14)
+const FINISH_MESSAGE_ID = uint8(15)
+
 const BYTES_MESSAGE_ID = 1
 const BYTES_PAYLOAD_LENGTH = 2
+const BYTES_CHUNK_ID_OK_MESSAGE = 4
+const BYTES_CLIENT_ID_FINISH_MESSAGE = 4
+
 
 
 type BetSocket struct {
@@ -128,27 +134,71 @@ func (b *BetSocket) sendFinish() error {
 		totalWritten += n
 	}
 
+
 	return nil
 }
 
-// Lee un mensaje con prefijo de longitud
-func (b *BetSocket) readMessage() (string, error) {
-	// Primero leemos los 4 bytes de longitud
-	lenBuf := make([]byte, 4)
-	if _, err := io.ReadFull(b.conn, lenBuf); err != nil {
-		log.Errorf("action: read_message_length | result: fail | error: %v", err)
-		return "", err
-	}
-	length := binary.BigEndian.Uint32(lenBuf)
 
-	// Ahora leemos exactamente "length" bytes
-	payload := make([]byte, length)
-	if _, err := io.ReadFull(b.conn, payload); err != nil {
-		log.Errorf("action: read_message_payload | result: fail | error: %v", err)
-		return "", err
+
+func (b *BetSocket) waitForAck(expectedChunkId int) error {
+	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
+	totalRead := 0
+	for totalRead < BYTES_MESSAGE_ID {
+		n, err := b.conn.Read(messageIdBuf[totalRead:])
+		if err != nil {
+			return err
+		}
+		totalRead += n
+	}
+	messageId := binary.BigEndian.Uint8(messageIdBuf)
+	if messageId != AGENCY_SUCCESS_MESSAGE_ID {
+		return fmt.Errorf("unexpected message ID: %d", messageId)
+	}
+	chunkIdBuf := make([]byte, BYTES_CHUNK_ID)
+	totalRead = 0
+	for totalRead < BYTES_CHUNK_ID {
+		n, err := b.conn.Read(chunkIdBuf[totalRead:])
+		if err != nil {
+			return err
+		}
+		totalRead += n
+	}
+	chunkId := binary.BigEndian.Uint32(chunkIdBuf)
+	if chunkId != uint32(expectedChunkId) {
+		return fmt.Errorf("unexpected chunk ID: %d", chunkId)
 	}
 
-	return string(payload), nil
+	return nil
+}
+
+func (b *BetSocket) waitForFinish() error {
+	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
+	totalRead := 0
+	for totalRead < BYTES_MESSAGE_ID {
+		n, err := b.conn.Read(messageIdBuf[totalRead:])
+		if err != nil {
+			return err
+		}
+		totalRead += n
+	}
+	messageId := binary.BigEndian.Uint8(messageIdBuf)
+	if messageId != FINISH_MESSAGE_ID {
+		return fmt.Errorf("unexpected message ID: %d", messageId)
+	}
+	clientIdBuf := make([]byte, BYTES_CLIENT_ID_FINISH_MESSAGE)
+	totalRead = 0
+	for totalRead < BYTES_CLIENT_ID_FINISH_MESSAGE {
+		n, err := b.conn.Read(clientIdBuf[totalRead:])
+		if err != nil {
+			return err
+		}
+		totalRead += n
+	}
+	clientId := binary.BigEndian.Uint32(clientIdBuf)
+	if clientId != uint32(b.clientId) {
+		return fmt.Errorf("unexpected client ID: %d", clientId)
+	}
+	return nil
 }
 
 func (b *BetSocket) Close() error {
