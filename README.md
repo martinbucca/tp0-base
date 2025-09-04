@@ -329,3 +329,45 @@ Tanto el servidor como el cliente necesitan manejar la señal SIGTERM para poder
 
 
 ![Tests Ejercicio 4](imgs/tests-ej4.png)
+
+
+
+### Solucion Ejercicio N°5:
+
+### Protocolo
+
+- Se define el mensaje desde el cliente hacia el servidor sendBet para enviar una apuesta y dejar registro en el servidor
+
+![Mensaje SendBet](imgs/protocolo-ej5.png)
+
+- Los primeros 4 Bytes son fijos y representan el largo del Payload
+- El payload es de tamaño variable y son bytes que representan texto (utf-8). Este texto contiene los campos para la apuesta, separados por el caracter <span style="color:blue">"|" </span>:
+ - Id del mensaje: Va a ser fijo y esta representado por la cadena de texto `"BET"`
+ - Id de la agencia
+ - Nombre
+ - Apellido
+ - Documento
+ - Fecha de Nacimiento
+ - Numero de apuesta
+
+Por ejemplo, un payload podria ser:
+
+**BET|1|Santiago Lionel|Lorca|30904465|1999-03-17|2201**
+
+
+1. El cliente (Agencia de quiniela) le manda un mensaje al servidor (Central de Loteria Nacional) en donde el ID del mensaje es `BET`.
+2. El servidor lee los primeros 4 bytes y sabe exactamente cuantos bytes mas tiene que leer para el payload. Deserializa el payload y separa los campos que vienen en el orden indicado en la estructura  y separados por el caracter `|`
+3. En caso de poder guardar correctamente la apuesta, el servidor le va a mandar un mensaje al cliente en donde los primeros 4 bytes son el largo del payload y un payload variable. Este protocolo define doss posibles mensajes para ese payload:
+- "OK": En caso de que se pudo guardar la apuesta correctamente
+- "ERROR": En caso de algun error en el servidor para procesar la apuesta
+
+
+- Los primeros 4 Bytes son fijos y representan el largo del Payload
+- Los Bytes del payload representan una cadena de texto (utf-8) que puede ser:
+  - "OK"
+  - "ERROR"
+
+### Tests
+
+
+![Tests Ejercicio 5](imgs/tests-ej5.png)
