@@ -10,8 +10,8 @@ import (
 )
 
 var log = logging.MustGetLogger("log")
-const AGENCY_SUCCESS_MESSAGE = "OK"
 const MAX_AMOUNT_ALLOWED = 150
+const RETRY_INTERVAL = 5
 
 type ClientConfig struct {
 	ID            string
@@ -66,7 +66,7 @@ func (c *Client) createBetSocket() error {
 func (c *Client) getWinners() ([]string, error) {
 	var winners []string
 	var err error
-	retryInterval := 5 * time.Second
+	retryInterval := RETRY_INTERVAL * time.Second
 
 	for {
 		if err := c.createBetSocket(); err != nil {
@@ -92,9 +92,6 @@ func (c *Client) getWinners() ([]string, error) {
 		}
 
 		time.Sleep(retryInterval)
-		if c.betSocket != nil {
-			c.betSocket.Close()
-		}
 
 	}
 }
