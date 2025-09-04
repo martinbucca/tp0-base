@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 )
 
 const BET_SEPARATOR = "|"
 const CHUNK_SEPARATOR = "&"
 const CHUNK_BET_MESSAGE_ID = uint16(12)
-const CHUNK_FINISH_MESSAGE_ID = uint16(13)
-const AGENCY_SUCCESS_MESSAGE_ID = uint16(14)
-const FINISH_MESSAGE_ID = uint16(15)
+const ACK_CHUNK_BET_MESSAGE_ID = uint16(13)
+const FINISH_MESSAGE_ID = uint16(14)
+const GET_WINNERS_MESSAGE_ID = uint16(15)
+const RECEIVE_WINNERS_MESSAGE_ID = uint16(16)
 
 const BYTES_MESSAGE_ID = 2
 const BYTES_PAYLOAD_LENGTH = 2
@@ -80,49 +82,57 @@ func (b *BetSocket) serializeBetsChunk(betsChunk *BetsChunk) string {
 }
 
 
-
-func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
-	data := b.serializeBetsChunk(betsChunk)
-	payload := []byte(data)
-	length := uint16(len(payload))
-	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	binary.BigEndian.PutUint16(messageIdBuf, CHUNK_BET_MESSAGE_ID)
-
-	lenBuf := make([]byte, BYTES_PAYLOAD_LENGTH)
-	binary.BigEndian.PutUint16(lenBuf, length)
-
-	if _, err := b.conn.Write(messageIdBuf); err != nil {
-		return err
-	}
-
-	if _, err := b.conn.Write(lenBuf); err != nil {
-		return err
-	}
-
+func (b *BetSocket) writeFull(buf []byte) error {
 	totalWritten := 0
-	for totalWritten < int(length) {
-		n, err := b.conn.Write(payload[totalWritten:])
+	for totalWritten < len(buf) {
+		n, err := b.conn.Write(buf[totalWritten:])
 		if err != nil {
 			return err
 		}
 		totalWritten += n
 	}
-
 	return nil
 }
 
-
-func (b *BetSocket) sendFinish() error {
-	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	binary.BigEndian.PutUint16(messageIdBuf, FINISH_MESSAGE_ID)
-
-	totalWritten := 0
-	for totalWritten < BYTES_MESSAGE_ID {
-		n, err := b.conn.Write(messageIdBuf[totalWritten:])
+func (b *BetSocket) readFull(buf []byte) error {
+	totalRead := 0
+	for totalRead < len(buf) {
+		n, err := b.conn.Read(buf[totalRead:])
 		if err != nil {
 			return err
 		}
-		totalWritten += n
+		totalRead += n
+	}
+	return nil
+}
+
+func makeMessageIDBuf(messageID uint16) []byte {
+	buf := make([]byte, BYTES_MESSAGE_ID)
+	binary.BigEndian.PutUint16(buf, messageID)
+	return buf
+}
+
+func (b *BetSocket) sendBets(betsChunk *BetsChunk) error {
+	data := b.serializeBetsChunk(betsChunk)
+	payload := []byte(data)
+	length := uint16(len(payload))
+
+	if err := b.writeFull(makeMessageIDBuf(CHUNK_BET_MESSAGE_ID)); err != nil {
+		return err
+	}
+
+	lenBuf := make([]byte, BYTES_PAYLOAD_LENGTH)
+	binary.BigEndian.PutUint16(lenBuf, length)
+	if err := b.writeFull(lenBuf); err != nil {
+		return err
+	}
+
+	return b.writeFull(payload)
+}
+
+func (b *BetSocket) sendFinish() error {
+	if err := b.writeFull(makeMessageIDBuf(FINISH_MESSAGE_ID)); err != nil {
+		return err
 	}
 
 	clientIdInt, err := strconv.Atoi(b.clientId)
@@ -131,39 +141,27 @@ func (b *BetSocket) sendFinish() error {
 	}
 	clientIdBuf := make([]byte, BYTES_CLIENT_ID_FINISH_MESSAGE)
 	binary.BigEndian.PutUint32(clientIdBuf, uint32(clientIdInt))
-
-	if _, err := b.conn.Write(clientIdBuf); err != nil {
-		return err
-	}
-
-	return nil
+	return b.writeFull(clientIdBuf)
 }
 
-
-
+func (b *BetSocket) sendGetWinners() error {
+	return b.writeFull(makeMessageIDBuf(GET_WINNERS_MESSAGE_ID))
+}
 
 func (b *BetSocket) waitForAck(expectedChunkId int) error {
 	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	totalRead := 0
-	for totalRead < BYTES_MESSAGE_ID {
-		n, err := b.conn.Read(messageIdBuf[totalRead:])
-		if err != nil {
-			return err
-		}
-		totalRead += n
+	if err := b.readFull(messageIdBuf); err != nil {
+		return err
 	}
 	messageId := binary.BigEndian.Uint16(messageIdBuf)
-	if messageId != AGENCY_SUCCESS_MESSAGE_ID {
+	if messageId != ACK_CHUNK_BET_MESSAGE_ID {
 		return fmt.Errorf("unexpected message ID: %d", messageId)
 	}
+
+	// chunk id
 	chunkIdBuf := make([]byte, BYTES_CHUNK_ID_OK_MESSAGE)
-	totalRead = 0
-	for totalRead < BYTES_CHUNK_ID_OK_MESSAGE {
-		n, err := b.conn.Read(chunkIdBuf[totalRead:])
-		if err != nil {
-			return err
-		}
-		totalRead += n
+	if err := b.readFull(chunkIdBuf); err != nil {
+		return err
 	}
 	chunkId := binary.BigEndian.Uint32(chunkIdBuf)
 	if chunkId != uint32(expectedChunkId) {
@@ -173,31 +171,24 @@ func (b *BetSocket) waitForAck(expectedChunkId int) error {
 	return nil
 }
 
-
 func (b *BetSocket) waitForFinish() error {
+	// message id
 	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	totalRead := 0
-	for totalRead < BYTES_MESSAGE_ID {
-		n, err := b.conn.Read(messageIdBuf[totalRead:])
-		if err != nil {
-			return err
-		}
-		totalRead += n
+	if err := b.readFull(messageIdBuf); err != nil {
+		return err
 	}
 	messageId := binary.BigEndian.Uint16(messageIdBuf)
 	if messageId != FINISH_MESSAGE_ID {
 		return fmt.Errorf("unexpected message ID: %d", messageId)
 	}
+
+	// client id
 	clientIdBuf := make([]byte, BYTES_CLIENT_ID_FINISH_MESSAGE)
-	totalRead = 0
-	for totalRead < BYTES_CLIENT_ID_FINISH_MESSAGE {
-		n, err := b.conn.Read(clientIdBuf[totalRead:])
-		if err != nil {
-			return err
-		}
-		totalRead += n
+	if err := b.readFull(clientIdBuf); err != nil {
+		return err
 	}
 	clientId := binary.BigEndian.Uint32(clientIdBuf)
+
 	expectedClientId, err := strconv.Atoi(b.clientId)
 	if err != nil {
 		return err
@@ -208,7 +199,36 @@ func (b *BetSocket) waitForFinish() error {
 	return nil
 }
 
+func (b *BetSocket) deserializeWinners(payload []byte) []string {
+	return strings.Split(string(payload), ",")
+}
 
+func (b *BetSocket) waitForWinners() ([]string, error) {
+	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
+	if err := b.readFull(messageIdBuf); err != nil {
+		return nil, err
+	}
+	messageId := binary.BigEndian.Uint16(messageIdBuf)
+	if messageId != RECEIVE_WINNERS_MESSAGE_ID {
+		return nil, fmt.Errorf("unexpected message ID: %d", messageId)
+	}
+
+	lengthBuf := make([]byte, BYTES_PAYLOAD_LENGTH)
+	if err := b.readFull(lengthBuf); err != nil {
+		return nil, err
+	}
+	length := binary.BigEndian.Uint32(lengthBuf)
+	if length == 0 {
+		return nil, fmt.Errorf("unexpected payload length: %d", length)
+	}
+
+	// payload
+	payloadBuf := make([]byte, length)
+	if err := b.readFull(payloadBuf); err != nil {
+		return nil, err
+	}
+	return b.deserializeWinners(payloadBuf), nil
+}
 
 func (b *BetSocket) Close() error {
 	return b.conn.Close()

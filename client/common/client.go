@@ -61,6 +61,16 @@ func (c *Client) createBetSocket() error {
 	return nil
 }
 
+func (c *Client) getWinners() ([]string, error) {
+	// Send request to server
+	if err := c.betSocket.sendGetWinners(); err != nil {
+		return nil, err
+	}
+
+	// Wait for response
+	return c.betSocket.receiveWinners()
+}
+
 // StartClientLoop Send messages to the client until some time threshold is met
 func (c *Client) StartClientLoop() {
 	if !c.is_currently_running {
@@ -102,7 +112,7 @@ func (c *Client) StartClientLoop() {
 			log.Infof("action: send_finish | result: success | client id: %v", c.config.ID)
 			break
 		}
-		if err := c.betSocket.sendBet(chunk); err != nil {
+		if err := c.betSocket.sendBets(chunk); err != nil {
 			log.Errorf("action: send_message | result: fail | error: %v", err)
 			return
 		}
@@ -114,6 +124,14 @@ func (c *Client) StartClientLoop() {
 		log.Infof("action: apuesta_enviada | result: success | cantidad: %d | chunk_id: %d", len(chunk.Bets), chunkID)
 		chunkID++
 	}
+
+	winners, err := c.getWinners()
+	if err != nil {
+		log.Errorf("action: get_winners | result: fail | error: %v", err)
+		return
+	}
+
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %d | ganadores: %v", len(winners), winners)
 
 	log.Infof("action: exit | result: success")
 	

@@ -3,9 +3,8 @@ import logging
 BET_MESSAGE_ID = "BET"
 SEPARATOR = "|"
 CHUNK_BET_MESSAGE_ID = 12
-CHUNK_FINISH_MESSAGE_ID = 13
-AGENCY_SUCCESS_MESSAGE_ID = 14
-FINISH_MESSAGE_ID = 15
+ACK_CHUNK_BET_MESSAGE_ID = 13
+FINISH_MESSAGE_ID = 14
 BYTES_MESSAGE_ID = 2
 BYTES_PAYLOAD_LENGTH = 2
 BYTES_CHUNK_ID_OK_MESSAGE = 4
@@ -55,7 +54,7 @@ class AgencySocket:
                 payload += chunk
             chunk_id, bets_list = self.deserialize_chunk(payload)
             return (chunk_id, bets_list)
-        elif message_id == CHUNK_FINISH_MESSAGE_ID:
+        elif message_id == FINISH_MESSAGE_ID:
             client_id_bytes = self.socket.recv(BYTES_CLIENT_ID_FINISH_MESSAGE)
             if len(client_id_bytes) < BYTES_CLIENT_ID_FINISH_MESSAGE:
                 raise ConnectionError("Failed to read client ID")
@@ -68,7 +67,7 @@ class AgencySocket:
         return ('', [])
 
     def send_ok_message(self, chunk_id):
-        message_id = AGENCY_SUCCESS_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
+        message_id = ACK_CHUNK_BET_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
         chunk_id_int = int(chunk_id)
         chunk_id_bytes = chunk_id_int.to_bytes(BYTES_CHUNK_ID_OK_MESSAGE, byteorder='big')
         self.socket.sendall(message_id + chunk_id_bytes)
