@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"io"
 )
 
 const BET_SEPARATOR = "|"
@@ -82,15 +81,15 @@ func (b *BetSocket) serializeBetsChunk(betsChunk *BetsChunk) string {
 
 
 func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
-	data := serializeBetsChunk(betsChunk)
+	data := b.serializeBetsChunk(betsChunk)
 	payload := []byte(data)
 	length := uint16(len(payload))
 
 	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	binary.BigEndian.PutUint8(messageIdBuf, CHUNK_BET_MESSAGE_ID)
+	binary.Write(messageIdBuf, binary.BigEndian, CHUNK_BET_MESSAGE_ID)
 
 	lenBuf := make([]byte, BYTES_PAYLOAD_LENGTH)
-	binary.BigEndian.PutUint16(lenBuf, length)
+	binary.Write(lenBuf, binary.BigEndian, length)
 
 	totalWritten := 0
 	for totalWritten < int(length) {
@@ -123,7 +122,7 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 
 func (b *BetSocket) sendFinish() error {
 	messageIdBuf := make([]byte, BYTES_MESSAGE_ID)
-	binary.BigEndian.PutUint8(messageIdBuf, CHUNK_FINISH_MESSAGE_ID)
+	binary.Write(messageIdBuf, binary.BigEndian, FINISH_MESSAGE_ID)
 
 	totalWritten := 0
 	for totalWritten < BYTES_MESSAGE_ID {

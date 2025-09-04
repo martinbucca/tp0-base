@@ -1,8 +1,6 @@
 package common
 
 import (
-	"net"
-	"time"
 	"os"
 	"os/signal"
 	"syscall"
@@ -54,7 +52,7 @@ func handleSigterm(c *Client, sigCh <-chan os.Signal) {
 
 
 func (c *Client) createBetSocket() error {
-	betSocket, err := NewBetSocket(c.config.ServerAddress)
+	betSocket, err := NewBetSocket(c.config.ServerAddress, c.config.ID)
 	if err != nil {
 		return err
 	}
