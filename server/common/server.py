@@ -112,9 +112,7 @@ class Server:
         return AgencySocket(c)
 
     def store_winners_for_agency(self, agency_id):
-        logging.info(f"action: store_winners | result: in_progress | agency_id: {agency_id}")
         winners = self._winners_by_agency.get(agency_id, [])
-        logging.info(f"action: store_winners | result: success | agency_id: {agency_id} | winners_count: {len(winners)}")
         winners = []
         for bet in bets:
             if bet.agency == agency_id and has_won(bet):
