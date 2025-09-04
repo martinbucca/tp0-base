@@ -41,9 +41,12 @@ class AgencySocket:
         return (chunk_id, bets_list)
 
     def receive_message_id(self):
-        message_id_bytes = self.socket.recv(BYTES_MESSAGE_ID)
-        if not message_id_bytes:
-            raise ConnectionError("Failed to read message ID")
+        message_id_bytes = b""
+        while len(message_id_bytes) < BYTES_MESSAGE_ID:
+            chunk = self.socket.recv(BYTES_MESSAGE_ID - len(message_id_bytes))
+            if not chunk:
+                raise ConnectionError("Failed to read message ID")
+            message_id_bytes += chunk
         message_id = int.from_bytes(message_id_bytes, byteorder='big')
         return message_id
 
