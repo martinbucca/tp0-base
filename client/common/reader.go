@@ -9,7 +9,7 @@ import (
 )
 
 
-const FILEPATH = "./agency.csv"
+const FILEPATH = "/agency.csv"
 
 type BetsChunk struct {
 	Bets []*Bet
