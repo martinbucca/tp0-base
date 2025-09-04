@@ -79,16 +79,16 @@ class Server:
                     logging.info("Solicitud de ganadores")
                     with self._lock:
                         if self._agencies_finished == self._number_of_agencies:
+                            self.winners_are_ready.wait()
                             logging.info("solicitud de ganadores aceptada. todas las agencias finalizaron")
                             client_id = agency_client_sock.receive_client_id()
-                            if self.winners_are_ready.is_set():
-                                logging.info("solicitud de ganadores aceptada. todas las agencias finalizaron")
-                                bets = load_bets()
-                                winners_list = []
-                                for bet in bets:
-                                    if bet.agency == client_id and has_won(bet):
-                                        winners_list.append(bet.document)
-                                agency_client_sock.send_winners_list(winners_list)
+                            logging.info("solicitud de ganadores aceptada. todas las agencias finalizaron")
+                            bets = load_bets()
+                            winners_list = []
+                            for bet in bets:
+                                if bet.agency == client_id and has_won(bet):
+                                    winners_list.append(bet.document)
+                            agency_client_sock.send_winners_list(winners_list)
                         else:
                             logging.info("solicitud de ganadores denegada. faltan agencias por terminar")
                             agency_client_sock.send_no_winners()
