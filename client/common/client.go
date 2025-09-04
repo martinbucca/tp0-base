@@ -5,6 +5,7 @@ import (
 	"os/signal"
 	"syscall"
 	"github.com/op/go-logging"
+	"fmt"
 )
 
 var log = logging.MustGetLogger("log")
