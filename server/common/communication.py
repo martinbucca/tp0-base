@@ -68,10 +68,6 @@ class AgencySocket:
         self.socket.sendall(message_id + chunk_id_bytes)
 
     def send_finish_message(self, client_id):
-        client_id_bytes = self.socket.recv(BYTES_CLIENT_ID)
-        if len(client_id_bytes) < BYTES_CLIENT_ID:
-            raise ConnectionError("Failed to read client ID")
-        client_id = int.from_bytes(client_id_bytes, byteorder='big')
         message_id = FINISH_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
         client_id = client_id.to_bytes(BYTES_CLIENT_ID, byteorder='big')
         finish_message_bytes = message_id + client_id
