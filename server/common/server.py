@@ -62,6 +62,7 @@ class Server:
                 if message_id == FINISH_MESSAGE_ID:
                     client_id = agency_client_sock.receive_client_id()
                     agency_client_sock.send_finish_message(client_id)
+                    logging.info(f"Sending finish message to client {client_id}")
                     with self._lock:
                         self._agencies_finished += 1
                         logging.info(f"action: agencia_finalizo | result: success | total_agencias_finalizadas: {self._agencies_finished}")
@@ -69,7 +70,7 @@ class Server:
                         if self._agencies_finished == self._number_of_agencies:
                             logging.info("action: sorteo | result: success")
                             self.winners_are_ready.set()
-                    break
+                        break
                 elif message_id == CHUNK_BET_MESSAGE_ID:
                     chunk_id, bets_chunk = agency_client_sock.receive_bets_chunk()
                     with self._lock:
