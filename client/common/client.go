@@ -89,6 +89,7 @@ func (c *Client) StartClientLoop() {
 	if maxBatchAmount > MAX_AMOUNT_ALLOWED {
 		maxBatchAmount = MAX_AMOUNT_ALLOWED
 	}
+	totalSent := 0
 	for c.is_currently_running {
 		chunk, err := csvReader.ReadChunk(fmt.Sprintf("%d", chunkID), maxBatchAmount)
 		if err != nil {
@@ -112,9 +113,11 @@ func (c *Client) StartClientLoop() {
 		}
 
 		log.Infof("action: apuesta_enviada | result: success | cantidad: %d | chunk_id: %d", len(chunk.Bets), chunkID)
-
+		totalSent += len(chunk.Bets)
 		chunkID++
 	}
+
+	log.Infof("action: apuesta_recibida | result: success | cantidad: %d", totalSent)
 
 	log.Infof("action: exit | result: success")
 	
