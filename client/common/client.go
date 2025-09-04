@@ -96,7 +96,6 @@ func (c *Client) StartClientLoop() {
 			return
 		}
 		if len(chunk.Bets) == 0 {
-			log.Infof("action: read_chunk | result: empty | chunk_id: %v", chunkID)
 			if err := c.betSocket.sendFinish(); err != nil {
 				log.Errorf("action: send_finish | result: fail | error: %v", err)
 			}
