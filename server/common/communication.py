@@ -18,7 +18,7 @@ class AgencySocket:
     def __init__(self, socket):
         self.socket = socket
 
-    def deserialize_chunk(payload: bytes) -> (str, list[Bet]):
+    def deserialize_chunk(self, payload: bytes) -> (str, list[Bet]):
         payload_decoded = payload.decode("utf-8")
         logging.info(f"{payload_decoded}")
         fields = payload_decoded.split("&")
