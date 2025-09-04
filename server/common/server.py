@@ -63,7 +63,9 @@ class Server:
                     logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets_chunk)}")
                     agency_client_sock.send_ok_message(chunk_id)
                 elif message_id == GET_WINNERS_MESSAGE_ID:
+                    logging.info("Solicitud de ganadores")
                     if self._agencies_finished == self._number_of_agencies:
+                        logging.info("solicitud de ganadores aceptada. todas las agencias finalizaron")
                         client_id = agency_client_sock.receive_client_id()
                         bets = load_bets()
                         winners_list = []
@@ -72,7 +74,9 @@ class Server:
                                 winners_list.append(bet.document)
                         agency_client_sock.send_winners_list(winners_list)
                     else:
+                        logging.info("solicitud de ganadores denegada. faltan agencias por terminar")
                         agency_client_sock.send_no_winners()
+                        
 
         except OSError as e:
             logging.error(f"action: receive_message | result: fail | error: {e}")
