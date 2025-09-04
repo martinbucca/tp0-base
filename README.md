@@ -192,7 +192,7 @@ Se puede generar el archivo corriendo el siguiente comando por consola:
 `./generar-compose.sh <nombre yaml> <num clientes>`
 
 ### Tests:
-![Tests Ejercicio 1](img/tests.png)
+![Tests Ejercicio 1](imgs/tests-1.png)
 
 
 
@@ -215,7 +215,7 @@ volumes:
 
 ### Tests
 
-![Tests Ejercicio 2](imgs/tests-ej2.png)
+![Tests Ejercicio 2](imgs/tests-2.png)
 
 
 
@@ -257,7 +257,7 @@ Luego se verifica la respuesta obtenida desde el server y se imprime el mensaje 
 ### Tests
 
 
-![Tests Ejercicio 3](imgs/tests-ej3.png)
+![Tests Ejercicio 3](imgs/tests-3.png)
 
 
 
@@ -328,7 +328,7 @@ Tanto el servidor como el cliente necesitan manejar la señal SIGTERM para poder
 ### Tests
 
 
-![Tests Ejercicio 4](imgs/tests-ej4.png)
+![Tests Ejercicio 4](imgs/tests-4.png)
 
 
 
@@ -338,7 +338,7 @@ Tanto el servidor como el cliente necesitan manejar la señal SIGTERM para poder
 
 - Se define el mensaje desde el cliente hacia el servidor sendBet para enviar una apuesta y dejar registro en el servidor
 
-![Mensaje SendBet](imgs/protocolo-ej5.png)
+![Mensaje SendBet](imgs/protocolo-5.png)
 
 - Los primeros 4 Bytes son fijos y representan el largo del Payload
 - El payload es de tamaño variable y son bytes que representan texto (utf-8). Este texto contiene los campos para la apuesta, separados por el caracter <span style="color:blue">"|" </span>:
@@ -370,7 +370,7 @@ Por ejemplo, un payload podria ser:
 ### Tests
 
 
-![Tests Ejercicio 5](imgs/tests-ej5.png)
+![Tests Ejercicio 5](imgs/tests-5.png)
 
 
 
@@ -405,7 +405,7 @@ El cliente puede enviarle los siguientes mensajes al servidor:
 
 - sendFinsih:
 
-  ![sendFinish message](imgs/sendFinish.png)
+  ![sendFinish message](imgs/sendGetWinners.png)
 
   El mensaje esta compuesto por:
   - 2 Bytes para el ID del mensaje (fijos)
@@ -426,7 +426,7 @@ El server puede enviarle los siguientes mensajes al Cliente:
 
   - sendFinishACK
 
-    ![sendFinish](imgs/sendFinish.png)
+    ![sendFinish](imgs/sendGetWinners.png)
 
     El mensaje es igual al que envia el cliente. Esta compuesto por:
       - 2 Bytes fijos para el ID del mensaje
@@ -455,6 +455,10 @@ type BetsChunk struct {
 5. El servidor responde un ack con un mensaje igual `sendFinish` y el id de la agencia correspondiente.
 6. El Cliente recibe el ack y finaliza.
 
+
+### Tests
+
+![tests ejercicio 6](imgs/tests-6.png)
 
 
 ### Solucion Ejercicio N°7:
@@ -592,3 +596,7 @@ Con las modificaciones de este ejercicio, ahora el servidor puede procesar vario
   ```
 
 - En el metodo `shutdown` se cierra el socket del servidor y se le hace `join()` a todos los threads para asegurar que no quede ninguno colgado.
+
+### Tests
+
+![tests ejercicio 8](imgs/tests-8.png)
