@@ -66,24 +66,20 @@ func (c *Client) createBetSocket() error {
 func (c *Client) getWinners() ([]string, error) {
 	var winners []string
 	var err error
-	maxRetries := 4
 	retryInterval := 10 * time.Second
 
-
-	for attempt := 1; attempt <= maxRetries; attempt++ {
+	for {
 		if err = c.betSocket.sendGetWinners(); err != nil {
 			return nil, err
 		}
 
 		winners, err = c.betSocket.waitForWinners()
-		if err == nil {
+		if err == nil && len(winners) > 0 {
 			return winners, nil
 		}
 
 		time.Sleep(retryInterval)
 	}
-
-	return nil, err
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
