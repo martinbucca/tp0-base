@@ -44,7 +44,6 @@ class Server:
         """
         try:
             # TODO: Modify the receive to avoid short-reads
-            total_bets_received = 0
             while True:
                 chunk_id, bets_chunk = agency_client_sock.receive_bets_chunk()
                 if len(bets_chunk) == 0:
@@ -53,7 +52,6 @@ class Server:
                 logging.info(f"action: apuesta_recibida | result: success | cantidad: {len(bets_chunk)}")
                 agency_client_sock.send_ok_message(chunk_id)
                 total_bets_received += len(bets_chunk)
-            logging.info(f"action: apuesta_recibida | result: success | cantidad: {total_bets_received}")
 
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
