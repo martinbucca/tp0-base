@@ -66,7 +66,7 @@ func (c *Client) createBetSocket() error {
 func (c *Client) getWinners() ([]string, error) {
 	var winners []string
 	var err error
-	retryInterval := 10 * time.Second
+	retryInterval := 5 * time.Second
 
 	for {
 		if err = c.betSocket.sendGetWinners(); err != nil {
