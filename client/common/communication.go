@@ -14,7 +14,8 @@ const CHUNK_BET_MESSAGE_ID = uint16(12)
 const ACK_CHUNK_BET_MESSAGE_ID = uint16(13)
 const FINISH_MESSAGE_ID = uint16(14)
 const GET_WINNERS_MESSAGE_ID = uint16(15)
-const RECEIVE_WINNERS_MESSAGE_ID = uint16(16)
+const NO_WINNERS_MESSAGE_ID = uint16(16)
+const WINNERS_RESULT_MESSAGE_ID = uint16(17)
 
 const BYTES_MESSAGE_ID = 2
 const BYTES_PAYLOAD_LENGTH = 2
@@ -145,7 +146,17 @@ func (b *BetSocket) sendFinish() error {
 }
 
 func (b *BetSocket) sendGetWinners() error {
-	return b.writeFull(makeMessageIDBuf(GET_WINNERS_MESSAGE_ID))
+	if err := b.writeFull(makeMessageIDBuf(GET_WINNERS_MESSAGE_ID)); err != nil {
+		return err
+	}
+
+	clientIdInt, err := strconv.Atoi(b.clientId)
+	if err != nil {
+		return err
+	}
+	clientIdBuf := make([]byte, BYTES_CLIENT_ID_WINNERS_MESSAGE)
+	binary.BigEndian.PutUint32(clientIdBuf, uint32(clientIdInt))
+	return b.writeFull(clientIdBuf)
 }
 
 func (b *BetSocket) waitForAck(expectedChunkId int) error {
@@ -211,6 +222,10 @@ func (b *BetSocket) waitForWinners() ([]string, error) {
 	messageId := binary.BigEndian.Uint16(messageIdBuf)
 	if messageId != RECEIVE_WINNERS_MESSAGE_ID {
 		return nil, fmt.Errorf("unexpected message ID: %d", messageId)
+	}
+
+	if messageId == NO_WINNERS_MESSAGE_ID {
+		return nil, fmt.Errorf("no winners found")
 	}
 
 	lengthBuf := make([]byte, BYTES_PAYLOAD_LENGTH)

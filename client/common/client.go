@@ -6,6 +6,7 @@ import (
 	"syscall"
 	"github.com/op/go-logging"
 	"fmt"
+	"time"
 )
 
 var log = logging.MustGetLogger("log")
@@ -61,16 +62,28 @@ func (c *Client) createBetSocket() error {
 	return nil
 }
 
+
 func (c *Client) getWinners() ([]string, error) {
-	if err := c.betSocket.sendGetWinners(); err != nil {
-		return nil, err
+	var winners []string
+	var err error
+	maxRetries := 3
+	retryInterval := 2 * time.Second
+
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if err = c.betSocket.sendGetWinners(); err != nil {
+			return nil, err
+		}
+
+		winners, err = c.betSocket.waitForWinners()
+		if err == nil {
+			return winners, nil
+		}
+
+		time.Sleep(retryInterval)
 	}
 
-	winners, err := c.betSocket.waitForWinners()
-	if err != nil {
-		return nil, err
-	}
-	return winners, nil
+	return nil, err
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
