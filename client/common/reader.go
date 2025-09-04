@@ -34,7 +34,6 @@ func NewBetFromCSVLine(record []string) (*Bet, error) {
 	surname := record[1]
 	documentId := record[2]
 	birthDate := record[3]
-	number := record[4]
 
 	number, err := strconv.Atoi(record[4])
 	if err != nil {

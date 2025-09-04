@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"strconv"
 )
 
 const BET_SEPARATOR = "|"
@@ -153,9 +154,9 @@ func (b *BetSocket) waitForAck(expectedChunkId int) error {
 	if messageId != AGENCY_SUCCESS_MESSAGE_ID {
 		return fmt.Errorf("unexpected message ID: %d", messageId)
 	}
-	chunkIdBuf := make([]byte, BYTES_CHUNK_ID)
+	chunkIdBuf := make([]byte, BYTES_CHUNK_ID_OK_MESSAGE)
 	totalRead = 0
-	for totalRead < BYTES_CHUNK_ID {
+	for totalRead < BYTES_CHUNK_ID_OK_MESSAGE {
 		n, err := b.conn.Read(chunkIdBuf[totalRead:])
 		if err != nil {
 			return err
@@ -194,7 +195,7 @@ func (b *BetSocket) waitForFinish() error {
 		totalRead += n
 	}
 	clientId := binary.BigEndian.Uint32(clientIdBuf)
-	if clientId != uint32(b.clientId) {
+	if clientId != strconv.Atoi(b.clientId) {
 		return fmt.Errorf("unexpected client ID: %d", clientId)
 	}
 	return nil
