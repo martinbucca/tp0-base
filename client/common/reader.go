@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/domain"
 	"io"
 	"os"
 	"strconv"
