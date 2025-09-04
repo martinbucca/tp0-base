@@ -367,6 +367,30 @@ Por ejemplo, un payload podria ser:
   - "OK"
   - "ERROR"
 
+### Manejo de Short reads y Writes
+
+Para manejar los problemas de [_short read y short write_](https://cs61.seas.harvard.edu/site/2018/FileDescriptors/). se implemento la escritura y lectura de la siguiente manera para asegurar que todos los bytes se envien y se reciban completamente antes de continuar
+
+```go
+totalWritten := 0
+for totalWritten < int(length) {
+    n, err := b.conn.Write(payload[totalWritten:])
+    if err != nil {
+        return err
+    }
+    totalWritten += n
+}
+```
+
+```python
+payload = b""
+while len(payload) < msg_length:
+    chunk = self.socket.recv(msg_length - len(payload))
+    if not chunk:
+        raise ConnectionError("Connection closed before receiving full message")
+    payload += chunk
+```
+
 ### Tests
 
 
