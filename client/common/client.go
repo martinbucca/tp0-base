@@ -127,6 +127,13 @@ func (c *Client) StartClientLoop() {
 		chunkID++
 	}
 
+	if err := c.betSocket.waitForFinish(); err != nil {
+		log.Errorf("action: wait_for_finish | result: fail | error: %v", err)
+		return
+	}
+
+	log.Infof("action: ack_for_finish | result: success")
+
 	winners, err := c.getWinners()
 	if err != nil {
 		log.Errorf("action: get_winners | result: fail | error: %v", err)
