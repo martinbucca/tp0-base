@@ -29,14 +29,16 @@ Con las modificaciones de este ejercicio, ahora el servidor puede procesar vario
   ```python 
   self.winners_are_ready = threading.Event()
   ```
+- Cuando todos los clientes terminan de enviar apuestas se setea el evento
    ```python 
   if self._agencies_finished == self._number_of_agencies:
     logging.info("action: sorteo | result: success")
     self.winners_are_ready.set()
   ```
+- Cuando un cliente pide por los ganadores se asegura que todos los clientes esten listos haciendo un `wait` al evento. En caso de que se haya seteado va a avaznar y sino va a quedar esperando.
    ```python 
   if self._agencies_finished == self._number_of_agencies:
-    if self.winners_are_ready.is_set():
+    self.winners_are_ready.wait():
       ...
   ```
 
