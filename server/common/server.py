@@ -74,10 +74,10 @@ class Server:
                             if bet.agency == client_id and has_won(bet):
                                 winners_list.append(bet.document)
                         agency_client_sock.send_winners_list(winners_list)
-                        break
                     else:
                         logging.info("solicitud de ganadores denegada. faltan agencias por terminar")
                         agency_client_sock.send_no_winners()
+                    break
                         
 
         except OSError as e:
