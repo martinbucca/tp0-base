@@ -548,6 +548,9 @@ El servidor ahora implementa tambien los siguientes mensaje:
   ```
 
 
+### Tests
+
+![tests ejercicio 7](imgs/tests-7.png)
 
 
 ### Solucion Ejercicio N°8:
