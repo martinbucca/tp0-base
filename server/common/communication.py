@@ -20,10 +20,12 @@ class AgencySocket:
 
     def deserialize_chunk(payload: bytes) -> (str, list[Bet]):
         fields = payload.decode("utf-8").split("&")
+        logging.info(f"action: deserialize_chunk | result: in_progress | payload_length: {len(payload)} | fields_count: {len(fields)}")
         client_id = fields[0]
         chunk_id = fields[1]
         bets = fields[2:]
         bets_list = []
+        logging.info(f"action: deserialize_chunk | result: in_progress | chunk_id: {chunk_id} | bets_count: {len(bets)}")
         for bet in bets:
             bet_fields = bet.split("|")
             if len(bet_fields) == 5:
