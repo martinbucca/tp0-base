@@ -71,7 +71,10 @@ class AgencySocket:
         message_id = AGENCY_SUCCESS_MESSAGE_ID.to_bytes(BYTES_MESSAGE_ID, byteorder='big')
         chunk_id_int = int(chunk_id)
         chunk_id_bytes = chunk_id_int.to_bytes(BYTES_CHUNK_ID_OK_MESSAGE, byteorder='big')
+        logging.info(f"SENDING OK MESSAGE | chunk_id: {chunk_id}")
         self.socket.sendall(message_id + chunk_id_bytes)
+        logging.info(f"SENDED OK MESSAGE | chunk_id: {chunk_id}")
+
 
 
 

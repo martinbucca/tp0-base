@@ -158,6 +158,7 @@ func (b *BetSocket) waitForAck(expectedChunkId int) error {
 	if chunkId != uint32(expectedChunkId) {
 		return fmt.Errorf("unexpected chunk ID: %d", chunkId)
 	}
+	log.Infof("action: wait_for_ack | result: success | chunk_id: %d", chunkId)
 
 	return nil
 }
