@@ -93,30 +93,21 @@ func (b *BetSocket) sendBet(betsChunk *BetsChunk) error {
 	lenBuf := make([]byte, BYTES_PAYLOAD_LENGTH)
 	binary.BigEndian.PutUint16(lenBuf, length)
 
+	if _, err := b.conn.Write(messageIdBuf); err != nil {
+		return err
+	}
+
+	if _, err := b.conn.Write(lenBuf); err != nil {
+		return err
+	}
+
 	totalWritten := 0
 	for totalWritten < int(length) {
-		if totalWritten < BYTES_MESSAGE_ID {
-			// Write the message ID (1 byte, big endian)
-			n, err := b.conn.Write(messageIdBuf[totalWritten:])
-			if err != nil {
-				return err
-			}
-			totalWritten += n
-		} else if totalWritten >= BYTES_MESSAGE_ID && totalWritten < BYTES_MESSAGE_ID+BYTES_PAYLOAD_LENGTH {
-			// Write the length prefix (2 bytes, big endian)
-			n, err := b.conn.Write(lenBuf[totalWritten:])
-			if err != nil {
-				return err
-			}
-			totalWritten += n
-		} else {
-			// Write the payload (the bets)
-			n, err := b.conn.Write(payload[totalWritten:])
-			if err != nil {
-				return err
-			}
-			totalWritten += n
+		n, err := b.conn.Write(payload[totalWritten:])
+		if err != nil {
+			return err
 		}
+		totalWritten += n
 	}
 
 	return nil
