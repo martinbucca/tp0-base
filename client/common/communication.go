@@ -233,7 +233,7 @@ func (b *BetSocket) waitForWinners() ([]string, error) {
 	if err := b.readFull(lengthBuf); err != nil {
 		return nil, err
 	}
-	length := binary.BigEndian.Uint32(lengthBuf)
+	length := binary.BigEndian.Uint16(lengthBuf)
 	if length == 0 {
 		return nil, fmt.Errorf("unexpected payload length: %d", length)
 	}
