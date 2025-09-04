@@ -9,6 +9,7 @@ import (
 
 const BET_MESSAGE_ID = "BET"
 const SEPARATOR = "|"
+const BYTES_LENGTH_PAYLOAD = 4
 
 
 type BetSocket struct {
@@ -43,7 +44,7 @@ func (b *BetSocket) sendBet(config *ClientConfig) error {
 	payload := []byte(data)
 	length := uint32(len(payload))
 
-	lenBuf := make([]byte, 4)
+	lenBuf := make([]byte, BYTES_LENGTH_PAYLOAD)
 	binary.BigEndian.PutUint32(lenBuf, length)
 	if _, err := b.conn.Write(lenBuf); err != nil {
 		return err
@@ -64,7 +65,7 @@ func (b *BetSocket) sendBet(config *ClientConfig) error {
 // Lee un mensaje con prefijo de longitud
 func (b *BetSocket) readMessage() (string, error) {
 	// Primero leemos los 4 bytes de longitud
-	lenBuf := make([]byte, 4)
+	lenBuf := make([]byte, BYTES_LENGTH_PAYLOAD)
 	if _, err := io.ReadFull(b.conn, lenBuf); err != nil {
 		log.Errorf("action: read_message_length | result: fail | error: %v", err)
 		return "", err
