@@ -525,7 +525,7 @@ while True:
 El servidor ahora implementa tambien los siguientes mensaje:
   - `send_winners_list`
 
-    ![send_winners_list](imgs/sendWinnersList.png)
+    ![send_winners_list](imgs/sendBets.png)
 
     El mensaje esta compuesto por:
       - 2 Bytes para el Id del mensaje
