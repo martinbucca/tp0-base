@@ -25,7 +25,7 @@ class Server:
         self.agencies = []
         self.winners_are_ready = threading.Event()
         
-        signal.signal(signal.SIGTERM, self._handle_sigterm)
+        signal.signal(signal.SIGTERM, self._handle_signal)
         signal.signal(signal.SIGINT, self._handle_signal)
 
     def run(self):
@@ -128,9 +128,9 @@ class Server:
         except Exception as e:
             logging.error(f"action: shutdown | result: fail | error: {e}")
 
-    
-    def _handle_sigterm(self, *_):
-        logging.info("action: shutdown | result: in_progress | reason: SIGTERM received")
+
+    def _handle_signal(self, *_):
+        logging.info("action: shutdown | result: in_progress | reason: signal received")
         self.shutdown()
         sys.exit(0)
 
