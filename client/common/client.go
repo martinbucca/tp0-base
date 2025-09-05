@@ -38,7 +38,7 @@ func NewClient(config ClientConfig) *Client {
 
 func setupSigtermHandler(c *Client) <-chan os.Signal {
 	sigChannel := make(chan os.Signal, 1)
-	signal.Notify(sigChannel, syscall.SIGTERM)
+	signal.Notify(sigChannel, syscall.SIGTERM, syscall.SIGINT)
 	go handleSigterm(c, sigChannel)
 	return sigChannel
 }

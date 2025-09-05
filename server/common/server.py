@@ -26,6 +26,7 @@ class Server:
         self.winners_are_ready = threading.Event()
         
         signal.signal(signal.SIGTERM, self._handle_sigterm)
+        signal.signal(signal.SIGINT, self._handle_signal)
 
     def run(self):
         """
