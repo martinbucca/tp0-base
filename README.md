@@ -623,6 +623,46 @@ Con las modificaciones de este ejercicio, ahora el servidor puede procesar vario
 
 - En el metodo `shutdown` se cierra el socket del servidor y se le hace `join()` a todos los threads para asegurar que no quede ninguno colgado.
 
+
+### Estimacion del MaxBatchAmount Default
+
+- Los paquetes que se envien no pueden superar los 8kB.
+- Teniendo en cuenta que los mensajes que envian apuestas en batchs estan compuestos de la siguiente manera:
+ - 2 Bytes fijos para el Id del mensaje
+ - 2 Bytes fijos para el largo del payload
+ - Payload es texto utf-8 separando campos por el caracter `"&"`:
+   - Id Cliente ~ 10 Bytes
+   - Id Chunk ~ 10 Bytes
+   - Apuestas, donde cada apuesta es texto utf-8 separando campos por el caracter `"|"`:
+     - Nombre ~ 20 Bytes
+     - Apellido ~ 25 Bytes
+     - Documento ~ 15 Bytes
+     - Fecha de Naciemiento ~ 10 Bytes
+     - Numero de Apuesta ~ 10 Bytes
+
+--> El tamaño maximo aproximado de cada apuesta es:
+```
+20 B (Nombre) + 1 B (|) + 25 B (Apellido) + 1 B (|) + 15 B (Documento) + 1 B (|) + 10 B (Fecha de Nacimiento) + 1 B (|) + 10 B (Numero de Apuesta) + 2 B (& separador inicial y/o final)= 86 Bytes
+```
+
+--> Tamaño maximo aproximado para el resto del payload:
+```
+10 B (Id Cliente) + 1 B (&) + 10 B (Id chunk) + 1 B (&) = 22 Bytes
+```
+--> Tamaño maximo aproximado de cada paquete entonces va a ser:
+```
+4 Bytes (header) + 22 Bytes (inicio del payload) + 86 Bytes (cada apuesta) * N_APUESTAS
+```
+- Como esto tiene que ser menor a 8kB, queda:
+
+```
+86 * N_APUESTAS < 8192 - 4 - 22
+N_APUESTAS < 8166 / 86
+N_APUESTAS < 94.95
+N_APUESTAS < 94
+```
+
+
 ### Tests
 
 ![tests ejercicio 8](imgs/tests-8.png)
